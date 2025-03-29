@@ -11,6 +11,7 @@ const InputFields = ({
     onIconPress,
     iconSource,
     editable = true,
+    isDisabled = false,
     placeholder,
     keyboardType,
     maxLength
@@ -32,7 +33,7 @@ const InputFields = ({
               maxLength={maxLength}
             />
             {iconSource && (
-              <TouchableOpacity onPress={onIconPress} style={styles.iconContainer}>
+              <TouchableOpacity onPress={onIconPress} disabled={isDisabled} style={styles.iconContainer}>
                 <Image source={iconSource} style={styles.icon} />
               </TouchableOpacity>
             )}

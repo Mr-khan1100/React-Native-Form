@@ -4,12 +4,14 @@ import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 const genders = ['Male', 'Female', 'Other'];
 const marriageStatus = ['Single', 'Engaged', 'Married']
 
-const GenderSelectionModal = ({ modalVisible, setModalVisible, setGender, setMarriageStatus, isGender }) => {
+  const GenderSelectionModal = ({ modalVisible, setModalVisible, setGender, setMarriageStatus, setIsChangeDetect, isGender }) => {
   const handleSelect = (item) => {
     if(isGender){
-    setGender(item);
+      setGender(item);
+      setIsChangeDetect(true);
     }else{
-        setMarriageStatus(item)
+      setMarriageStatus(item);
+      setIsChangeDetect(true);
     }
     setModalVisible(false);
   };

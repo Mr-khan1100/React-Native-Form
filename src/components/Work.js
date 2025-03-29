@@ -1,28 +1,36 @@
 import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, ScrollView, Button, Alert } from 'react-native';
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import  GenderSelectionModal  from '../utils/GenderModal';
-import PhoneNumberInput from '../utils/PhoneNumberInput';
 import InputFields from '../utils/InputFields';
+import CustomCheckbox from '../utils/CustomCheckbox ';
+import FormBlueButton from '../utils/FormBlueButton';
+import FormContext from '../context/FormContext';
 
 const Work = (props) => {
-    const [occupation, setOccupation] = useState('');
-    const [email, setEmail] = useState('');
-    const [dob, setDob] = useState('');
-    const [gender, setGender] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [phoneLength, setPhoneLength] = useState(0);
-    const [countryInitials, setcountryInitials] = useState('');
-    const [marriageStatus, setMarriageStatus] = useState('')
-    const [address, setAddress] = useState('');
+    const {userDetails, setUserDetails,setIsWorkDone} = useContext(FormContext);
+    const [occupation, setOccupation] = useState(userDetails.occupation || '');
+    const [company, setCompany] = useState(userDetails.company || '');
+    const [startDate, setStartDate] = useState(userDetails.startDate || '');
+    const [endDate, setEndDate] = useState(userDetails.endDate || '');
+    const [currentField, setCurrentField] = useState('');
+    const [officeAddress, setOfficeAddress] = useState(userDetails.officeAddress || '');
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-    const [genderModalVisible, setGenderModalVisible] = useState(false);
-    const [MerriageModalVisible, setMerriageModalVisible] = useState(false);
+    const [isEndDateChecked, setIsEndDateChecked] = useState(userDetails.isEndDateChecked || false);
+    const [isAddressChecked, setIsAddressChecked] = useState(userDetails.isAddressChecked || false);
+    const [isChangeDetect, setIsChangeDetect] = useState(false);
+    
 
-    const [error, setError] = useState({occupation:'', email:'', dob:'', gender:'', phoneNumber:'', marriage:'', address:''});
+    const [error, setError] = useState({occupation:'', company:'', startDate:'', endDate:'', address:''});
+
+    console.log(userDetails,'userDetails');
+    
 
     const validateOccupation = () => {
+      console.log('came here');
+      
         const trimmedName = occupation.trim();
+        const nameRegex = /^[a-zA-Z0-9&.,\-\s]+$/;
+
     
         if(trimmedName=='' || trimmedName.length == 0){
             setError((prev) => ({ ...prev, occupation: 'Occupation is required' }));
@@ -34,60 +42,134 @@ const Work = (props) => {
           return 'Occupation must be at least 4 characters long.';
         }
     
-        const nameRegex = /^[a-zA-Z]+$/;
+        // const nameRegex = /^[a-zA-Z]+$/;
         if (!nameRegex.test(trimmedName)) {
           setError((prev) => ({
             ...prev,
-            occupation: 'Occupation should only contain alphabets and no special characters or numbers.',
+            occupation: 'Invalid characters used. Only letters, numbers, spaces, &, ., and - are allowed.',
           }));
-          return 'Occupation should only contain alphabets and no special characters or numbers.';
+          return 'Invalid characters used. Only letters, numbers, spaces, &, ., and - are allowed.';
+        }
+
+        const hasAlphabet = /[a-zA-Z]/.test(trimmedName);
+        if (!hasAlphabet) {
+            setError((prev) => ({ ...prev, occupation: 'Occupation name must contain at least one letter.' }));
+          return 'Occupation name must contain at least one letter.';
         }
     
         setError((prev) => ({ ...prev, occupation: '' }));
         return ''
     };
 
-    const validateEmail = () => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!email.trim()) {
-          setError((prev) => ({ ...prev, email: 'Email is required.' }));
-          return 'Email is required.';
-        } else if (!emailRegex.test(email)) {
-          setError((prev) => ({ ...prev, email: 'Invalid email format.' }));
-          return 'Invalid email format.';
-        } else {
-          setError((prev) => ({ ...prev, email: '' }));
-          return ''
+    const validateCompany = () => {
+      console.log('came to compnay');
+      
+        const trimmedCompany = company?.trim();
+        const nameRegex = /^[a-zA-Z0-9&.,\-\s]+$/;
+    
+        if(!trimmedCompany || trimmedCompany.length == 0){
+      console.log('came to compnay 1');
+
+            setError((prev) => ({ ...prev, company: 'Company is required' }));
+          return 'Company is required';
         }
+
+        if (trimmedCompany.length < 3) {
+      console.log('came to compnay 2');
+
+            setError((prev) => ({ ...prev, company: 'Company name must be between 3 and 50 characters.' }));
+          return 'Company name must be between 3 and 50 characters.';
+        }
+
+        
+        if (!nameRegex.test(trimmedCompany)) {
+      console.log('came to compnay 3');
+          
+            setError((prev) => ({ ...prev, company: 'Invalid characters used. Only letters, numbers, spaces, &, ., and - are allowed.' }));
+          return 'Invalid characters used. Only letters, numbers, spaces, &, ., and - are allowed.';
+        }
+
+        const hasAlphabet = /[a-zA-Z]/.test(trimmedCompany);
+        if (!hasAlphabet) {
+
+      console.log('came to compnay 4');
+
+            setError((prev) => ({ ...prev, company: 'Company name must contain at least one letter.' }));
+          return 'Company name must contain at least one letter.';
+        }
+      console.log('came to compnay 5');
+
+
+        setError((prev) => ({ ...prev, company: '' }));
+        return ''
     };
 
-    const validateDob = () =>{
-        console.log('Dob: ',dob);
-        if (!dob) {
-          setError((prev) => ({ ...prev, dob: 'Date of birth is required.' }));
-            return 'Date of birth is required.';
-          } else if (!isValidDate(dob)) {
-          setError((prev) => ({ ...prev, dob: 'Date must be in this format. (dd/mm/yyyy).' }));
-           return 'Date must be in this format. (dd/mm/yyyy).';
-          } else if (isDateInFuture(dob)) {
-          setError((prev) => ({ ...prev, dob: 'Date must be today or earlier.' }));
+    const validateStartDate = () =>{
+      console.log('1');
+      
+        if (!startDate) {
+          setError((prev) => ({ ...prev, startDate: 'Start date is required.' }));
+            return 'Start date is required.';
+          } 
+          
+        else if (!isValidDate(startDate)) {
+      console.log('2');
+
+          setError((prev) => ({ ...prev, startDate: 'Date must be in this format. (dd/mm/yyyy) & year less than 1900' }));
+           return 'Date must be in this format. (dd/mm/yyyy) & year less than 1900';
+          } 
+        else if (isDateInFuture(startDate)) {
+      console.log('3');
+
+          setError((prev) => ({ ...prev, startDate: 'Date must be today or earlier.' }));
             return 'Date must be today or earlier.';
           }
-        setError((prev) => ({ ...prev, dob: '' }));
+        else if(isBeforeEndDate(startDate)) {
+      console.log('4');
+
+            setError((prev) => ({ ...prev, startDate: 'Start date must be less than EndDate' }));
+            return 'Start date must be less than EndDate';
+          }
+        else if(isAfterDob(startDate)){
+      console.log('5');
+
+            setError((prev) => ({ ...prev, endDate: 'Start date must be greater than dob' }));
+            return 'Start date must be greater than dob';
+          }
+      console.log('6');
+
+        setError((prev) => ({ ...prev, startDate: '' }));
         return '';
           
       
     }
 
-    const validateGender = () => {
-        if (!gender) {
-          setError(prev => ({ ...prev, gender: 'Gender is required.' }));
-          return 'Gender is required.';
+    const validateEndDate = () =>{
+        if(!isEndDateChecked){
+            if (!endDate) {
+            setError((prev) => ({ ...prev, endDate: 'End date is required.' }));
+                return 'End date is required.';
+            } else if (!isValidDate(endDate)) {
+            setError((prev) => ({ ...prev, endDate: 'Date must be in this format. (dd/mm/yyyy) & year less than 1900' }));
+                return 'Date must be in this format. (dd/mm/yyyy) & year less than 1900';
+            } else if (isDateInFuture(endDate)) {
+            setError((prev) => ({ ...prev, endDate: 'Date must be today or earlier.' }));
+                return 'Date must be today or earlier.';
+            }else if(isAfterStartDate(endDate)) {
+                setError((prev) => ({ ...prev, endDate: 'End date must be greater than start Date' }));
+                return 'End date must be greater than start Date';
+            }else if(isAfterDob(endDate)){
+                setError((prev) => ({ ...prev, endDate: 'End date must be greater than dob' }));
+                return 'End date must be greater than dob';
+            }
         }
-        setError(prev => ({ ...prev, gender: '' }));
+        
+        setError((prev) => ({ ...prev, endDate: '' }));
         return '';
+          
+      
+    }
 
-      };
 
     const showDatePicker = () => {
         setDatePickerVisibility(true);
@@ -97,9 +179,19 @@ const Work = (props) => {
         setDatePickerVisibility(false);
     };
 
-    const handleConfirm = selectedDate => {
-        setError(prev => ({...prev, dob: ''}));
-        setDob(formatDate(selectedDate));
+    const handleConfirm = (selectedDate) => {
+        // setStartDate(formatDate(selectedDate));
+        console.log(currentField,'current field');
+        
+        if (currentField === 'startDate') {
+            setError(prev => ({...prev, startDate: ''}));
+            setIsChangeDetect(true)
+            setStartDate(formatDate(selectedDate));
+          } else if (currentField === 'endDate') {
+            setError(prev => ({...prev, endDate: ''}));
+            setIsChangeDetect(true)
+            setEndDate(formatDate(selectedDate));
+        }
         hideDatePicker();
     };
     
@@ -148,121 +240,285 @@ const Work = (props) => {
         return date > today;
     };
 
+    const isBeforeEndDate = dateString => {
+        if (endDate === 'Currently Working' || endDate === '') {
+            return false;
+        }
 
-    const validatePhoneNumber = () => {
+        const [day, month, year] = dateString.split('/').map(Number);
+        const startdate = new Date(year, month - 1, day);
+        const [endDay, endMonth, endYear] = endDate.split('/').map(Number)
+        const enddate = new Date(endYear, endMonth -1, endDay)
+        return startdate > enddate;
+    }
+
+    const isAfterStartDate = dateString => {
+        if (startDate === '') {
+            return false;
+        }
+
+        const [day, month, year] = dateString.split('/').map(Number);
+        const enddate = new Date(year, month - 1, day);
+        const [endDay, endMonth, endYear] = startDate.split('/').map(Number)
+        const startdate = new Date(endYear, endMonth -1, endDay)
+        return startdate > enddate;
+    }
+
+    const isAfterDob = dateString => {
+      // If neither startDate nor endDate exists, nothing to validate
+      if (!userDetails.dob) {
+        return false;
+      }else{
+        console.log('got', userDetails.dob);
         
-        const cleanedNumber = phoneNumber?.replace(/\D/g, ''); // Remove non-digits
+      }
+      
+      const [day, month, year] = dateString.split('/').map(Number);
+      const dateToCheck = new Date(year, month - 1, day);
+    
+      if (userDetails.dob) {
+        const [sDay, sMonth, sYear] = userDetails.dob.split('/').map(Number);
+        const dobDateObj = new Date(sYear, sMonth - 1, sDay);
+        return dateToCheck <= dobDateObj;
+      }
+      return false;
+    };
 
-        const countryValidations = {
-            'US': { 
-              regex: /^[2-9]\d{9}$/,
-              error: "US number: 10 digits starting with 2-9"
-            },
-            'IN': { 
-              regex: /^[6-9]\d{9}$/,
-              error: "Indian number: 10 digits starting with 6-9"
-            },
-            'GB': { 
-              regex: /^(?:(?:\(?(?:0(?:0|11)\)?[\s-]?\(?|\+)44\)?[\s-]?(?:(?:0\)?[\s-]?)?)|)(?:\d{5}[\s-]?\d{4,5}|\d{10})$)/,
-              error: "UK number: 10 digits in valid format"
-            },
-            'AU': { 
-              regex: /^[1-9]\d{8}$/,
-              error: "Australian number: 9 digits starting with 1-9"
-            },
-            'CA': { 
-              regex: /^[2-9]\d{9}$/,
-              error: "Canadian number: 10 digits starting with 2-9"
-            },
-            'DE': { 
-              regex: /^[1-9]\d{10}$/,
-              error: "German number: 11 digits starting with 1-9"
-            },
-            'FR': { 
-              regex: /^[1-9]\d{8}$/,
-              error: "French number: 9 digits starting with 1-9"
-            }
+    const validateDateChange = (text) => {
+        console.log(text,'text');
+        let sanitizedText = text.replace(/[^0-9]/g, '');
+        let formattedText = '';
+        const currentYear = new Date().getFullYear();
+
+        let day = sanitizedText.slice(0, 2);
+        let month = sanitizedText.slice(2, 4);
+        let year = sanitizedText.slice(4, 8);
+
+        if (day.length === 2) {
+          let dayNum = parseInt(day, 10);
+          if (dayNum < 1) {
+            day = '01';
+          } else if (dayNum > 31) {
+            day = '31';
+          }
+        }
+
+        if (month.length === 2) {
+          let monthNum = parseInt(month, 10);
+          if (monthNum < 1 || monthNum > 12) {
+            month = '01';
+          }
+        }
+
+        const maxDays = {
+          '01': 31,
+          '02': 29,
+          '03': 31,
+          '04': 30,
+          '05': 31,
+          '06': 30,
+          '07': 31,
+          '08': 31,
+          '09': 30,
+          10: 31,
+          11: 30,
+          12: 31,
         };
 
-        const validation = countryValidations[countryInitials];
-        if(!cleanedNumber){
-            setError(prev => ({
-                ...prev,
-                phoneNumber: `Phone number is required.`}))
-            return  `Phone number is required.`;
+        if (day.length === 2 && month.length === 2) {
+          let dayNum = parseInt(day, 10);
+          let maxDay = maxDays[month] || 31;
+
+          if (dayNum > maxDay) {
+            day = maxDay.toString().padStart(2, '0');
+          }
         }
-        if (cleanedNumber.length !== phoneLength) {
-          setError(prev => ({
-            ...prev,
-            phoneNumber: `Phone number must be ${phoneLength} digits`
-          }));
-          return `Phone number must be ${phoneLength} digits`
-        } else if(validation && !validation.regex.test(cleanedNumber)){
-            setError(prev => ({
-                ...prev,
-                phoneNumber: validation.error
-              }));
-              return validation.error;
-        } else{
-          setError(prev => ({ ...prev, phoneNumber: '' }));
-          return '';
+
+        if (year.length === 4) {
+          let yearNum = parseInt(year, 10);
+          if (yearNum < 1900 || yearNum > currentYear) {
+            year = currentYear.toString();
+          }
         }
+
+        if (sanitizedText.length >= 1) formattedText += day;
+        if (sanitizedText.length >= 3) formattedText += '/' + month;
+        if (sanitizedText.length >= 5) formattedText += '/' + year;
+        setStartDate(formattedText);
+        setIsChangeDetect(true);
     };
     
-    const handlePhoneNumberChange = (text) => {
-        // Remove all non-digit characters
-        const cleanedNumber = text.replace(/\D/g, '');
-        setPhoneNumber(cleanedNumber);
+    const validateEndDateChange = (text) => {
+        console.log(text,'text');
+        let sanitizedText = text?.replace(/[^0-9]/g, '');
+        let formattedText = '';
+        const currentYear = new Date().getFullYear();
+
+        let day = sanitizedText.slice(0, 2);
+        let month = sanitizedText.slice(2, 4);
+        let year = sanitizedText.slice(4, 8);
+
+        if (day.length === 2) {
+          let dayNum = parseInt(day, 10);
+          if (dayNum < 1) {
+            day = '01';
+          } else if (dayNum > 31) {
+            day = '31';
+          }
+        }
+
+        if (month.length === 2) {
+          let monthNum = parseInt(month, 10);
+          if (monthNum < 1 || monthNum > 12) {
+            month = '01';
+          }
+        }
+
+        const maxDays = {
+          '01': 31,
+          '02': 29,
+          '03': 31,
+          '04': 30,
+          '05': 31,
+          '06': 30,
+          '07': 31,
+          '08': 31,
+          '09': 30,
+          10: 31,
+          11: 30,
+          12: 31,
+        };
+
+        if (day.length === 2 && month.length === 2) {
+          let dayNum = parseInt(day, 10);
+          let maxDay = maxDays[month] || 31;
+
+          if (dayNum > maxDay) {
+            day = maxDay.toString().padStart(2, '0');
+          }
+        }
+
+        if (year.length === 4) {
+          let yearNum = parseInt(year, 10);
+          if (yearNum < 1900 || yearNum > currentYear) {
+            year = currentYear.toString();
+          }
+        }
+
+        if (sanitizedText.length >= 1) formattedText += day;
+        if (sanitizedText.length >= 3) formattedText += '/' + month;
+        if (sanitizedText.length >= 5) formattedText += '/' + year;
+        setEndDate(formattedText);
+        setIsChangeDetect(true);
+
     };
 
     const validateAddress = () => {
-        const trimmedAddress = address.trim();
-        if(trimmedAddress == '' || trimmedAddress.length == 0){
-            setError((prev) => ({ ...prev, address: 'Address is required' }));
-            return 'Address is required';
+        const trimmedAddress = officeAddress.trim();
+        const addressRegex = /^[a-zA-Z0-9&.,\-\s]+$/;
+        if(!isAddressChecked){
+            if(trimmedAddress == '' || trimmedAddress.length == 0){
+                setError((prev) => ({ ...prev, address: 'Address is required' }));
+                return 'Address is required';
+            }    
+            if (!addressRegex.test(trimmedAddress)) {
+                setError((prev) => ({ ...prev, address: 'Invalid characters used. Only letters, numbers, spaces, &, ., and - are allowed.' }));
+              return 'Invalid characters used. Only letters, numbers, spaces, &, ., and - are allowed.';
+            }
         }
-
+        
         setError((prev) => ({ ...prev, address: '' }));
         return '';
     }
 
- 
 
-    const handleNextPress = async () => {
-    
-        const newErrors = {
-          name: validateName(),
-          email: validateEmail(),
-          dob: validateDob(),
-          phoneNumber: validatePhoneNumber(),
-          address: validateAddress(),
-        };
-     
-        setError(newErrors);
-      
-      console.log(newErrors);
-      
-        const hasError = Object.values(newErrors).some(err => err !== '');
-      
-        if (hasError) {
-            Alert.alert(
-                "Missing Information",  
-                "Please fill all required fields before proceeding.",
-                [
-                  { 
-                    text: "OK", 
-                    onPress: () => console.log("OK Pressed"),
-                    style: "cancel" 
-                  }
-                ],
-                { cancelable: true }
-            );
-          return;
-        }
-      
-        // Only navigate if no errors
-        props.navigation.navigate('Documents');
+  const handleEnDateCheck = () => {
+    setIsEndDateChecked(!isEndDateChecked);
+    if(!isEndDateChecked){
+        setEndDate('Curently Working');
+        setError(prev => ({...prev, endDate: ''}));
+    }
+    else{
+        setEndDate('');
+    }
+  };
+
+  const handleAddressCheck = () => {
+    setIsAddressChecked(!isAddressChecked);
+    if(!isAddressChecked){
+      setOfficeAddress('Remote');
+        setError(prev => ({...prev, address: ''}));
+    }else{
+      setOfficeAddress('');
+    }
+  };
+
+  const handleNextPress = async () => {
+        console.log('now first ');
+        
+    const newErrors = {
+        occupation: validateOccupation(), 
+        company: validateCompany(), 
+        startDate: validateStartDate(), 
+        endDate: validateEndDate(), 
+        address: validateAddress()
     };
+ 
+    setError(newErrors);
+  
+  console.log(newErrors);
+  
+    const hasError = Object.values(newErrors).some(err => err !== '');
+    console.log('now where');
+    
+    if (hasError) {
+        Alert.alert(
+            "Missing Information",  
+            "Please fill all required fields correctly before proceeding.",
+            [
+              { 
+                text: "OK", 
+                onPress: () => console.log("OK Pressed"),
+                style: "cancel" 
+              }
+            ],
+            { cancelable: true }
+        );
+      return;
+    }else{
+
+      setUserDetails((prev) => ({...prev, occupation: occupation,
+        company: company,
+        startDate: startDate,
+        endDate: endDate,
+        officeAddress: officeAddress,
+        isEndDateChecked: isEndDateChecked,
+        isAddressChecked: isAddressChecked,
+        isWordDone: true
+      }))
+      console.log('here1');
+
+      setIsChangeDetect(false);
+      setIsWorkDone(true);
+      props.navigation.navigate('Documents');
+      console.log('here');
+      
+
+    }
+  
+    // Only navigate if no errors
+  };
+  useEffect(() => {
+        if(isChangeDetect){
+          setIsWorkDone(false)
+        }
+        // else{
+        //   setIsPersonalDone(true)
+        //   setIsWorkDone(true)
+        // }
+      
+  }, [isChangeDetect])
+
   return (
     <ScrollView style={styles.container}>
        <InputFields 
@@ -272,7 +528,7 @@ const Work = (props) => {
             onFocus={() => setError(prev => ({...prev, occupation: ''}))} 
             onBlur={()=> validateOccupation()}
             // onChangeText={setFullName}
-            onChangeText={(text) => setOccupation(text)}
+            onChangeText={(text) => {setOccupation(text); setIsChangeDetect(true)}}
             editable={true}
             maxLength={25}
             placeholder={'Enter Occupation eg:(Engineer/Doctor/Business...)'}
@@ -280,172 +536,89 @@ const Work = (props) => {
         />
 
         <InputFields 
-            label={'Email*'} 
-            value={email} 
-            keyboardType={'email-address'}
-            onFocus={() => setError(prev => ({...prev, email: ''}))} 
-            onBlur={()=> validateEmail()}
-            onChangeText={setEmail}
+            label={'Company Name*'} 
+            value={company} 
+            keyboardType={'defualt'}
+            onFocus={() => setError(prev => ({...prev, company: ''}))} 
+            onBlur={()=> validateCompany()}
+            onChangeText={(text) => {setCompany(text); setIsChangeDetect(true)}}
             editable={true}
-            placeholder={'Enter Email'}
-            error={error.email}
+            maxLength={30}
+            placeholder={'Enter Company Name'}
+            error={error.company}
         />
 
         <InputFields 
-            label={'Date of birth*'} 
-            value={dob} 
-            keyboardType={'default'}
-            onFocus={() => setError(prev => ({...prev, dob: ''}))} 
-            onBlur={()=> validateDob()}
-            onChangeText={text => {
-                console.log(text,'text');
-                let sanitizedText = text.replace(/[^0-9]/g, '');
-                let formattedText = '';
-                const currentYear = new Date().getFullYear();
-
-                let day = sanitizedText.slice(0, 2);
-                let month = sanitizedText.slice(2, 4);
-                let year = sanitizedText.slice(4, 8);
-
-                if (day.length === 2) {
-                  let dayNum = parseInt(day, 10);
-                  if (dayNum < 1) {
-                    day = '01';
-                  } else if (dayNum > 31) {
-                    day = '31';
-                  }
-                }
-
-                if (month.length === 2) {
-                  let monthNum = parseInt(month, 10);
-                  if (monthNum < 1 || monthNum > 12) {
-                    month = '01';
-                  }
-                }
-
-                const maxDays = {
-                  '01': 31,
-                  '02': 29,
-                  '03': 31,
-                  '04': 30,
-                  '05': 31,
-                  '06': 30,
-                  '07': 31,
-                  '08': 31,
-                  '09': 30,
-                  10: 31,
-                  11: 30,
-                  12: 31,
-                };
-
-                if (day.length === 2 && month.length === 2) {
-                  let dayNum = parseInt(day, 10);
-                  let maxDay = maxDays[month] || 31;
-
-                  if (dayNum > maxDay) {
-                    day = maxDay.toString().padStart(2, '0');
-                  }
-                }
-
-                if (year.length === 4) {
-                  let yearNum = parseInt(year, 10);
-                  if (yearNum < 1900 || yearNum > currentYear) {
-                    year = currentYear.toString();
-                  }
-                }
-
-                if (sanitizedText.length >= 1) formattedText += day;
-                if (sanitizedText.length >= 3) formattedText += '/' + month;
-                if (sanitizedText.length >= 5) formattedText += '/' + year;
-                setDob(formattedText);
+            label={'Start Date*'} 
+            value={startDate} 
+            keyboardType={'phone-pad'}
+            onFocus={() => setError(prev => ({...prev, startDate: ''}))} 
+            onBlur={()=> validateStartDate()}
+            onChangeText={text => validateDateChange(text)}
+            onIconPress={() => {
+                setCurrentField('startDate');
+                showDatePicker();
               }}
-            onIconPress={showDatePicker}
             iconSource={require('../../assets/Images/date_input.png')}
             editable={true}
-            placeholder={'Enter date of birth (dd/mm/yyyy)'}
-            error={error.dob}
+            placeholder={'Enter start date(dd/mm/yyyy).'}
+            error={error.startDate}
         />
 
         <InputFields 
-            label={'Gender'} 
-            value={gender} 
-            keyboardType={'default'}
-            // onFocus={() => setError(prev => ({...prev, gender: ''}))} 
-            // onBlur={()=> validateGender()}
-            // onChangeText={setGender}
-            onIconPress={() => setGenderModalVisible(true)}
-            iconSource={require('../../assets/Images/DropDownIcon.png')}
-            editable={false}
-            placeholder={'Select Gender'}
-            error={error.gender}
+            label={'EndDate Date*'} 
+            value={endDate} 
+            keyboardType={'phone-pad'}
+            onFocus={() => setError(prev => ({...prev, endDate: ''}))} 
+            onBlur={()=> validateEndDate()}
+            onChangeText={text => validateEndDateChange(text)}
+            onIconPress={() => {
+                setCurrentField('endDate');
+                showDatePicker();
+              }}
+            isDisabled={isEndDateChecked}
+            iconSource={require('../../assets/Images/date_input.png')}
+            editable={isEndDateChecked ? false : true}
+            placeholder={isEndDateChecked ? 'Currently Working' : 'Enter end date(dd/mm/yyyy)'}
+            error={error.endDate}
+        />
+        <CustomCheckbox
+        isChecked={isEndDateChecked}
+        onPress={handleEnDateCheck}
+        label="Currently Working"
         />
 
-        <PhoneNumberInput
-        phoneNumber={phoneNumber}
-        setPhoneNumber={setPhoneNumber}
-        setPhoneLength = {setPhoneLength}
-        setcountryInitials = {setcountryInitials}
-        onBlur={validatePhoneNumber}
-        onChangeText={handlePhoneNumberChange}
-        onFocus={() => setError(prev => ({...prev, phoneNumber: ''}))}
-        error={error.phoneNumber}
-        />
-
-        <InputFields 
-            label={'Marital Status'} 
-            value={marriageStatus} 
-            keyboardType={'default'}
-            onIconPress={() => setMerriageModalVisible(true)}
-            iconSource={require('../../assets/Images/DropDownIcon.png')}
-            editable={false}
-            placeholder={'Select Status'}
-            error={error.marriage}
-        />
 
         <InputFields 
-            label={'Address*'} 
-            value={address} 
+            label={'Office Address*'} 
+            value={officeAddress} 
             keyboardType={'default'}
             onFocus={() => setError(prev => ({...prev, address: ''}))} 
             onBlur={()=> validateAddress()}
             // onChangeText={setAddress}
             onChangeText={(text) => {
-                if (text.length > 150) {
-                  setError(prev => ({ ...prev, address: 'Address cannot exceed more than 150 characters remove 1 character' }));
-                } else {
-                  setError(prev => ({ ...prev, address: '' }));
-                }
-                setAddress(text);
+                // if (text.length > 150) {
+                //   setError(prev => ({ ...prev, address: 'Address cannot exceed more than 150 characters remove 1 character' }));
+                // } else {
+                //   setError(prev => ({ ...prev, address: '' }));
+                // }
+                setOfficeAddress(text);
+                setIsChangeDetect(true);
+
               }}
-            editable={true}
-            maxLength={151}
+            editable={isAddressChecked ? false : true}
+            maxLength={150}
             placeholder={'Enter Full Address'}
             error={error.address}
         />
-
-        <Button
-        title="Next"
-        onPress={handleNextPress}
-        color="#4582e6"
-        accessibilityLabel="Learn more about this purple button"
-        style={styles.button}
+        <CustomCheckbox
+        isChecked={isAddressChecked}
+        onPress={handleAddressCheck}
+        label="Remote"
         />
 
 
-
-        <GenderSelectionModal 
-        modalVisible={genderModalVisible}
-        setModalVisible={setGenderModalVisible}
-        setGender={setGender}
-        isGender={true}
-        />
-
-        <GenderSelectionModal 
-        modalVisible={MerriageModalVisible}
-        setModalVisible={setMerriageModalVisible}
-        setMarriageStatus={setMarriageStatus} 
-        isGender={false}
-        />
+        <FormBlueButton title="NEXT" onPress={handleNextPress} />
 
         <DateTimePickerModal
               isVisible={isDatePickerVisible}
