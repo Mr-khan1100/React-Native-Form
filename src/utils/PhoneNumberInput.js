@@ -1,26 +1,31 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, StyleSheet, Image } from 'react-native';
 import { CountryCodeList } from './CountryCodeList'; // Custom country data
+import FormContext from '../context/FormContext';
 
 
 const PhoneNumberInput = ({
     phoneNumber,
-    setPhoneLength,
+    // setPhoneLength,
+    // setCountryCode,
     onBlur,
     onFocus,
     onChangeText,
-    setcountryInitials,
+    // setcountryInitials,
+    setSelectedCountry,
+    selectedCountry,
     error,
 }) => {
-//   const [phoneNumber, setPhoneNumber] = useState('');    
-  const [selectedCountry, setSelectedCountry] = useState({ code: '+91', flag: '🇮🇳',initial:'IN', phoneLength: 10 });
+  // const {userDetails, setUserDetails} = useContext(FormContext);
+  // const [selectedCountry, setSelectedCountry] = useState({code : '+91', flag: '🇮🇳',initial:'IN', phoneLength: 10 });
   const [modalVisible, setModalVisible] = useState(false);
   const [search, setSearch] = useState('');
   
-  useEffect(() => {
-    setPhoneLength(selectedCountry.phoneLength);
-    setcountryInitials(selectedCountry.initial);
-  }, [selectedCountry, setPhoneLength, setcountryInitials]);
+  // useEffect(() => {
+  //   setPhoneLength(selectedCountry.phoneLength);
+  //   setcountryInitials(selectedCountry.initial);
+  //   setCountryCode(selectedCountry.code);
+  // }, [selectedCountry, setPhoneLength, setcountryInitials]);
 
   const openModal = () => {
     setSearch('');
@@ -127,7 +132,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
+    borderRadius: 5,
     marginRight: 10,
     height: 50,
   },
@@ -146,7 +151,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     color:'#2E2E2E',
-    borderRadius: 8,
+    borderRadius: 5,
   },
  
   modalContainer: { 
