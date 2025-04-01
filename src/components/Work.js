@@ -1,49 +1,65 @@
 import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, ScrollView, Button, Alert } from 'react-native';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import InputFields from '../utils/InputFields';
 import CustomCheckbox from '../utils/CustomCheckbox ';
 import FormBlueButton from '../utils/FormBlueButton';
 import FormContext from '../context/FormContext';
+import { storeData } from '../services/storageService';
+import { useFocusEffect } from '@react-navigation/native';
 
 const Work = (props) => {
-    const {userDetails, setUserDetails,setIsWorkDone} = useContext(FormContext);
-    const [occupation, setOccupation] = useState(userDetails.occupation || '');
-    const [company, setCompany] = useState(userDetails.company || '');
-    const [startDate, setStartDate] = useState(userDetails.startDate || '');
-    const [endDate, setEndDate] = useState(userDetails.endDate || '');
+    const {userDetails, setUserDetails,setIsWorkDone, initalUserDetails, setInitialUserDetails, setIsWorkChangeDetect, handleStore, isWorkChangeDetect} = useContext(FormContext);
+    // const [occupation, setOccupation] = useState(userDetails?.occupation || '');
+    // const [company, setCompany] = useState(userDetails?.company || '');
+    // const [startDate, setStartDate] = useState(userDetails?.startDate || '');
+    // const [endDate, setEndDate] = useState(userDetails?.endDate || '');
     const [currentField, setCurrentField] = useState('');
-    const [officeAddress, setOfficeAddress] = useState(userDetails.officeAddress || '');
+    // const [officeAddress, setOfficeAddress] = useState(userDetails?.officeAddress || '');
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-    const [isEndDateChecked, setIsEndDateChecked] = useState(userDetails.isEndDateChecked || false);
-    const [isAddressChecked, setIsAddressChecked] = useState(userDetails.isAddressChecked || false);
-    const [isChangeDetect, setIsChangeDetect] = useState(false);
-    
 
+    // const [isEndDateChecked, setIsEndDateChecked] = useState(userDetails?.isEndDateChecked || false);
+    // const [isAddressChecked, setIsAddressChecked] = useState(userDetails?.isAddressChecked || false);
+    // const [isChangeDetect, setIsChangeDetect] = useState(false);
+    
+    const [isFocus, setIsFocus] = useState(false);
     const [error, setError] = useState({occupation:'', company:'', startDate:'', endDate:'', address:''});
 
-    console.log(userDetails,'userDetails');
+    useFocusEffect(
+      useCallback(() => {
+        const hasNoErrors = Object.values(error).every(err => err === '');
+        if(!isFocus && hasNoErrors){
+        console.log('focus here');
+        
+          setIsWorkChangeDetect(false);
+        }
+        return () => {
+         
+          console.log('Screen unfocused - cleanup');
+        };
+      }, [isFocus, error ]) 
+    );
     
-
     const validateOccupation = () => {
+      setIsFocus(false);
       console.log('came here');
       
-        const trimmedName = occupation.trim();
+        const trimmedOccupation = initalUserDetails.occupation.trim();
         const nameRegex = /^[a-zA-Z0-9&.,\-\s]+$/;
 
     
-        if(trimmedName=='' || trimmedName.length == 0){
+        if(!trimmedOccupation){
             setError((prev) => ({ ...prev, occupation: 'Occupation is required' }));
           return 'Occupation is required';
         }
 
-        if (trimmedName.length < 4) {
+        if (trimmedOccupation.length < 4) {
           setError((prev) => ({ ...prev, occupation: 'Occupation must be at least 4 characters long.' }));
           return 'Occupation must be at least 4 characters long.';
         }
     
         // const nameRegex = /^[a-zA-Z]+$/;
-        if (!nameRegex.test(trimmedName)) {
+        if (!nameRegex.test(trimmedOccupation)) {
           setError((prev) => ({
             ...prev,
             occupation: 'Invalid characters used. Only letters, numbers, spaces, &, ., and - are allowed.',
@@ -51,23 +67,29 @@ const Work = (props) => {
           return 'Invalid characters used. Only letters, numbers, spaces, &, ., and - are allowed.';
         }
 
-        const hasAlphabet = /[a-zA-Z]/.test(trimmedName);
+        const hasAlphabet = /[a-zA-Z]/.test(trimmedOccupation);
         if (!hasAlphabet) {
             setError((prev) => ({ ...prev, occupation: 'Occupation name must contain at least one letter.' }));
           return 'Occupation name must contain at least one letter.';
         }
     
         setError((prev) => ({ ...prev, occupation: '' }));
-        return ''
+        setUserDetails((prev) => {
+          const updatedDetails = { ...prev, occupation: trimmedOccupation };
+            handleStore(updatedDetails);
+            return updatedDetails;
+        });
+        return '';
     };
 
     const validateCompany = () => {
+      setIsFocus(false);
       console.log('came to compnay');
       
-        const trimmedCompany = company?.trim();
+        const trimmedCompany = initalUserDetails.company?.trim();
         const nameRegex = /^[a-zA-Z0-9&.,\-\s]+$/;
     
-        if(!trimmedCompany || trimmedCompany.length == 0){
+        if(!trimmedCompany){
       console.log('came to compnay 1');
 
             setError((prev) => ({ ...prev, company: 'Company is required' }));
@@ -101,73 +123,88 @@ const Work = (props) => {
 
 
         setError((prev) => ({ ...prev, company: '' }));
-        return ''
+        setUserDetails((prev) => {
+          const updatedDetails = { ...prev, company: trimmedCompany };
+            handleStore(updatedDetails);
+            return updatedDetails;
+        });
+        return '';
     };
 
-    const validateStartDate = () =>{
+    const validateStartDate = (jobStartDate) =>{
+      setIsFocus(false);
       console.log('1');
       
-        if (!startDate) {
+        if (!jobStartDate) {
           setError((prev) => ({ ...prev, startDate: 'Start date is required.' }));
             return 'Start date is required.';
           } 
           
-        else if (!isValidDate(startDate)) {
+        else if (!isValidDate(jobStartDate)) {
       console.log('2');
 
           setError((prev) => ({ ...prev, startDate: 'Date must be in this format. (dd/mm/yyyy) & year less than 1900' }));
            return 'Date must be in this format. (dd/mm/yyyy) & year less than 1900';
           } 
-        else if (isDateInFuture(startDate)) {
+        else if (isDateInFuture(jobStartDate)) {
       console.log('3');
 
           setError((prev) => ({ ...prev, startDate: 'Date must be today or earlier.' }));
             return 'Date must be today or earlier.';
           }
-        else if(isBeforeEndDate(startDate)) {
+        else if(isBeforeEndDate(jobStartDate)) {
       console.log('4');
 
             setError((prev) => ({ ...prev, startDate: 'Start date must be less than EndDate' }));
             return 'Start date must be less than EndDate';
           }
-        else if(isAfterDob(startDate)){
+        else if(isAfterDob(jobStartDate)){
       console.log('5');
 
-            setError((prev) => ({ ...prev, endDate: 'Start date must be greater than dob' }));
+            setError((prev) => ({ ...prev, startDate: 'Start date must be greater than dob' }));
             return 'Start date must be greater than dob';
           }
       console.log('6');
-
+      setIsFocus(false);
         setError((prev) => ({ ...prev, startDate: '' }));
+        setUserDetails((prev) => {
+          const updatedDetails = { ...prev, startDate: jobStartDate };
+            handleStore(updatedDetails);
+            return updatedDetails;
+        });
         return '';
           
       
-    }
+    };
 
-    const validateEndDate = () =>{
-        if(!isEndDateChecked){
-            if (!endDate) {
+    const validateEndDate = (jobEndDate) =>{
+      setIsFocus(false);
+        if(!initalUserDetails.isEndDateChecked){
+            if (!jobEndDate) {
             setError((prev) => ({ ...prev, endDate: 'End date is required.' }));
                 return 'End date is required.';
-            } else if (!isValidDate(endDate)) {
+            } else if (!isValidDate(jobEndDate)) {
             setError((prev) => ({ ...prev, endDate: 'Date must be in this format. (dd/mm/yyyy) & year less than 1900' }));
                 return 'Date must be in this format. (dd/mm/yyyy) & year less than 1900';
-            } else if (isDateInFuture(endDate)) {
+            } else if (isDateInFuture(jobEndDate)) {
             setError((prev) => ({ ...prev, endDate: 'Date must be today or earlier.' }));
                 return 'Date must be today or earlier.';
-            }else if(isAfterStartDate(endDate)) {
+            }else if(isAfterStartDate(jobEndDate)) {
                 setError((prev) => ({ ...prev, endDate: 'End date must be greater than start Date' }));
                 return 'End date must be greater than start Date';
-            }else if(isAfterDob(endDate)){
+            }else if(isAfterDob(jobEndDate)){
                 setError((prev) => ({ ...prev, endDate: 'End date must be greater than dob' }));
                 return 'End date must be greater than dob';
             }
         }
-        
+        setIsFocus(false);
         setError((prev) => ({ ...prev, endDate: '' }));
+        setUserDetails((prev) => {
+          const updatedDetails = { ...prev, endDate: jobEndDate };
+            handleStore(updatedDetails);
+            return updatedDetails;
+        });
         return '';
-          
-      
     }
 
 
@@ -182,15 +219,19 @@ const Work = (props) => {
     const handleConfirm = (selectedDate) => {
         // setStartDate(formatDate(selectedDate));
         console.log(currentField,'current field');
-        
+        const formattedDate = formatDate(selectedDate);
         if (currentField === 'startDate') {
             setError(prev => ({...prev, startDate: ''}));
-            setIsChangeDetect(true)
-            setStartDate(formatDate(selectedDate));
+            setIsWorkChangeDetect(true);
+            setInitialUserDetails(prev => ({...prev, startDate : formattedDate}));
+            hideDatePicker();
+            validateStartDate(formattedDate);
           } else if (currentField === 'endDate') {
             setError(prev => ({...prev, endDate: ''}));
-            setIsChangeDetect(true)
-            setEndDate(formatDate(selectedDate));
+            setIsWorkChangeDetect(true);
+            setInitialUserDetails(prev => ({...prev, endDate : formattedDate}));
+            hideDatePicker();
+            validateEndDate(formattedDate);
         }
         hideDatePicker();
     };
@@ -204,6 +245,9 @@ const Work = (props) => {
 
     const isValidDate = date => {
         const datePattern = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+        if(date === 'Currently Working') {
+            return false;
+        }
         if (!datePattern.test(date)) {
           return false;
         }
@@ -234,6 +278,9 @@ const Work = (props) => {
     };
     
     const isDateInFuture = dateString => {
+      if(dateString === 'Currently Working') {
+        return false;
+    }
         const [day, month, year] = dateString.split('/').map(Number);
         const date = new Date(year, month - 1, day);
         const today = new Date();
@@ -241,43 +288,47 @@ const Work = (props) => {
     };
 
     const isBeforeEndDate = dateString => {
-        if (endDate === 'Currently Working' || endDate === '') {
+        if (initalUserDetails.endDate === 'Currently Working' || initalUserDetails.endDate === '') {
             return false;
         }
 
         const [day, month, year] = dateString.split('/').map(Number);
         const startdate = new Date(year, month - 1, day);
-        const [endDay, endMonth, endYear] = endDate.split('/').map(Number)
-        const enddate = new Date(endYear, endMonth -1, endDay)
+        const [endDay, endMonth, endYear] = initalUserDetails.endDate.split('/').map(Number);
+        const enddate = new Date(endYear, endMonth - 1, endDay);
         return startdate > enddate;
-    }
+      };
 
     const isAfterStartDate = dateString => {
-        if (startDate === '') {
+
+        if (initalUserDetails.startDate === '') {
             return false;
         }
+        if(dateString === 'Currently Working') {
+          return false;
+      }
 
         const [day, month, year] = dateString.split('/').map(Number);
         const enddate = new Date(year, month - 1, day);
-        const [endDay, endMonth, endYear] = startDate.split('/').map(Number)
-        const startdate = new Date(endYear, endMonth -1, endDay)
+        const [endDay, endMonth, endYear] = initalUserDetails.startDate.split('/').map(Number);
+        const startdate = new Date(endYear, endMonth - 1, endDay);
         return startdate > enddate;
-    }
+      };
 
     const isAfterDob = dateString => {
       // If neither startDate nor endDate exists, nothing to validate
-      if (!userDetails.dob) {
+      if (!initalUserDetails.dob) {
         return false;
-      }else{
-        console.log('got', userDetails.dob);
-        
       }
+      if(dateString === 'Currently Working') {
+        return false;
+    }
       
       const [day, month, year] = dateString.split('/').map(Number);
       const dateToCheck = new Date(year, month - 1, day);
     
-      if (userDetails.dob) {
-        const [sDay, sMonth, sYear] = userDetails.dob.split('/').map(Number);
+      if (initalUserDetails.dob) {
+        const [sDay, sMonth, sYear] = initalUserDetails.dob.split('/').map(Number);
         const dobDateObj = new Date(sYear, sMonth - 1, sDay);
         return dateToCheck <= dobDateObj;
       }
@@ -285,7 +336,7 @@ const Work = (props) => {
     };
 
     const validateDateChange = (text) => {
-        console.log(text,'text');
+        // console.log(text,'text');
         let sanitizedText = text.replace(/[^0-9]/g, '');
         let formattedText = '';
         const currentYear = new Date().getFullYear();
@@ -344,8 +395,9 @@ const Work = (props) => {
         if (sanitizedText.length >= 1) formattedText += day;
         if (sanitizedText.length >= 3) formattedText += '/' + month;
         if (sanitizedText.length >= 5) formattedText += '/' + year;
-        setStartDate(formattedText);
-        setIsChangeDetect(true);
+        // setStartDate(formattedText);
+        setInitialUserDetails(prev => ({...prev, startDate : formattedText}));
+        setIsWorkChangeDetect(true);
     };
     
     const validateEndDateChange = (text) => {
@@ -408,16 +460,21 @@ const Work = (props) => {
         if (sanitizedText.length >= 1) formattedText += day;
         if (sanitizedText.length >= 3) formattedText += '/' + month;
         if (sanitizedText.length >= 5) formattedText += '/' + year;
-        setEndDate(formattedText);
-        setIsChangeDetect(true);
+        setInitialUserDetails(prev => ({...prev, endDate : formattedText}));
+        setIsWorkChangeDetect(true);
 
     };
 
     const validateAddress = () => {
-        const trimmedAddress = officeAddress.trim();
+      // console.log('came to validate address', initalUserDetails);
+      
+        setIsFocus(false);
+        const trimmedAddress = initalUserDetails.officeAddress.trim();
+        console.log(trimmedAddress, 'trimmedAdress');
+        
         const addressRegex = /^[a-zA-Z0-9&.,\-\s]+$/;
-        if(!isAddressChecked){
-            if(trimmedAddress == '' || trimmedAddress.length == 0){
+        if(!initalUserDetails.isAddressChecked){
+            if(!trimmedAddress){
                 setError((prev) => ({ ...prev, address: 'Address is required' }));
                 return 'Address is required';
             }    
@@ -428,40 +485,109 @@ const Work = (props) => {
         }
         
         setError((prev) => ({ ...prev, address: '' }));
+        setUserDetails((prev) => {
+          const updatedDetails = { ...prev, officeAddress: trimmedAddress };
+            handleStore(updatedDetails);
+            return updatedDetails;
+        });
         return '';
-    }
+    };
 
+    const isCurrentlyWorking = useRef(false);
+    const isRemote = useRef(false);
+
+    
 
   const handleEnDateCheck = () => {
-    setIsEndDateChecked(!isEndDateChecked);
-    if(!isEndDateChecked){
-        setEndDate('Curently Working');
-        setError(prev => ({...prev, endDate: ''}));
-    }
-    else{
-        setEndDate('');
-    }
+    const newIsEndChecked = !initalUserDetails.isEndDateChecked;
+    const newEndDate = newIsEndChecked ? 'Currently Working' : '';
+    isCurrentlyWorking.current = true;
+    setIsWorkChangeDetect(true);
+    // console.log(newIsChecked, newOfficeAddress, 'inside handle Address');
+    
+  setInitialUserDetails(prev => ({
+     ...prev,
+     isEndDateChecked: newIsEndChecked,
+     endDate: newEndDate,
+    }));
+   
+    setUserDetails(userPrev => {
+      const updatedDetails = {
+        ...userPrev,
+        isEndDateChecked: newIsEndChecked,
+        endDate: newEndDate,
+      };
+      
+      handleStore(updatedDetails);
+      return updatedDetails;
+    });
   };
+
+  
+    useEffect(() => {
+      if (isCurrentlyWorking.current) {
+          isCurrentlyWorking.current = false; 
+          // if (initalUserDetails.endDate) {
+            console.log('here to check useEffect');
+            
+              validateEndDate(initalUserDetails.endDate);
+          // }
+      }
+    }, [initalUserDetails.endDate]);
 
   const handleAddressCheck = () => {
-    setIsAddressChecked(!isAddressChecked);
-    if(!isAddressChecked){
-      setOfficeAddress('Remote');
-        setError(prev => ({...prev, address: ''}));
-    }else{
-      setOfficeAddress('');
-    }
-  };
+    // Use functional update to get latest state for initialUserDetails
+      const newIsChecked = !initalUserDetails.isAddressChecked;
+      const newOfficeAddress = newIsChecked ? 'Remote' : '';
+      setIsWorkChangeDetect(true);
+      isRemote.current = true;
+      console.log(newIsChecked, newOfficeAddress, 'inside handle Address');
+      
+    setInitialUserDetails(prev => ({
+       ...prev,
+        isAddressChecked: newIsChecked,
+        officeAddress: newOfficeAddress,
+      }));
+     
 
+      setUserDetails(userPrev => {
+        const updatedDetails = {
+          ...userPrev,
+          isAddressChecked: newIsChecked,
+          officeAddress: newOfficeAddress,
+        };
+
+        // validateAddress(newOfficeAddress);
+        
+        handleStore(updatedDetails);
+        return updatedDetails;
+      });
+      
+  };
+  
+  
+  useEffect(() => {
+    if (isRemote.current) {
+        isRemote.current = false; 
+        // if (initalUserDetails.endDate) {
+          console.log('here to check useEffect');
+          
+            validateAddress();
+        // }
+    }
+  }, [initalUserDetails.officeAddress]);
+  
+
+  
   const handleNextPress = async () => {
         console.log('now first ');
         
     const newErrors = {
         occupation: validateOccupation(), 
         company: validateCompany(), 
-        startDate: validateStartDate(), 
-        endDate: validateEndDate(), 
-        address: validateAddress()
+        startDate: validateStartDate(initalUserDetails.startDate), 
+        endDate: validateEndDate(initalUserDetails.endDate), 
+        address: validateAddress(),
     };
  
     setError(newErrors);
@@ -487,48 +613,29 @@ const Work = (props) => {
       return;
     }else{
 
-      setUserDetails((prev) => ({...prev, occupation: occupation,
-        company: company,
-        startDate: startDate,
-        endDate: endDate,
-        officeAddress: officeAddress,
-        isEndDateChecked: isEndDateChecked,
-        isAddressChecked: isAddressChecked,
-        isWordDone: true
-      }))
-      console.log('here1');
-
-      setIsChangeDetect(false);
-      setIsWorkDone(true);
+      setIsWorkChangeDetect(false);
+      // setIsWorkDone(true);
+      setInitialUserDetails(prev => ({...prev, isWorkDone:true}));
+      setUserDetails((prev) => {
+        const updatedDetails = { ...prev, isWorkDone:true};
+          handleStore(updatedDetails);
+          return updatedDetails;
+      });
       props.navigation.navigate('Documents');
       console.log('here');
-      
-
     }
-  
-    // Only navigate if no errors
   };
-  useEffect(() => {
-        if(isChangeDetect){
-          setIsWorkDone(false)
-        }
-        // else{
-        //   setIsPersonalDone(true)
-        //   setIsWorkDone(true)
-        // }
-      
-  }, [isChangeDetect])
 
   return (
     <ScrollView style={styles.container}>
        <InputFields 
             label={'Occupation*'} 
-            value={occupation} 
+            value={initalUserDetails.occupation} 
             keyboardType={'default'}
-            onFocus={() => setError(prev => ({...prev, occupation: ''}))} 
+            onFocus={() => {setError(prev => ({...prev, occupation: ''})); setIsFocus(true);}} 
             onBlur={()=> validateOccupation()}
             // onChangeText={setFullName}
-            onChangeText={(text) => {setOccupation(text); setIsChangeDetect(true)}}
+            onChangeText={(text) => {setInitialUserDetails(prev => ({...prev, occupation:text})); setIsWorkChangeDetect(true);}}
             editable={true}
             maxLength={25}
             placeholder={'Enter Occupation eg:(Engineer/Doctor/Business...)'}
@@ -537,11 +644,11 @@ const Work = (props) => {
 
         <InputFields 
             label={'Company Name*'} 
-            value={company} 
+            value={initalUserDetails.company}
             keyboardType={'defualt'}
-            onFocus={() => setError(prev => ({...prev, company: ''}))} 
+            onFocus={() => {setError(prev => ({...prev, company: ''})); setIsFocus(true);}}
             onBlur={()=> validateCompany()}
-            onChangeText={(text) => {setCompany(text); setIsChangeDetect(true)}}
+            onChangeText={(text) => {setInitialUserDetails(prev => ({...prev, company:text})); setIsWorkChangeDetect(true);}}
             editable={true}
             maxLength={30}
             placeholder={'Enter Company Name'}
@@ -550,10 +657,10 @@ const Work = (props) => {
 
         <InputFields 
             label={'Start Date*'} 
-            value={startDate} 
+            value={initalUserDetails.startDate} 
             keyboardType={'phone-pad'}
-            onFocus={() => setError(prev => ({...prev, startDate: ''}))} 
-            onBlur={()=> validateStartDate()}
+            onFocus={() => {setError(prev => ({...prev, startDate: ''})); setIsFocus(true);}}
+            onBlur={()=> validateStartDate(initalUserDetails.startDate)}
             onChangeText={text => validateDateChange(text)}
             onIconPress={() => {
                 setCurrentField('startDate');
@@ -567,23 +674,23 @@ const Work = (props) => {
 
         <InputFields 
             label={'EndDate Date*'} 
-            value={endDate} 
+            value={initalUserDetails.endDate} 
             keyboardType={'phone-pad'}
-            onFocus={() => setError(prev => ({...prev, endDate: ''}))} 
-            onBlur={()=> validateEndDate()}
+            onFocus={() => {setError(prev => ({...prev, endDate: ''})); setIsFocus(true);}}
+            onBlur={()=> validateEndDate(initalUserDetails.endDate)}
             onChangeText={text => validateEndDateChange(text)}
             onIconPress={() => {
                 setCurrentField('endDate');
                 showDatePicker();
               }}
-            isDisabled={isEndDateChecked}
+            isDisabled={initalUserDetails.isEndDateChecked}
             iconSource={require('../../assets/Images/date_input.png')}
-            editable={isEndDateChecked ? false : true}
-            placeholder={isEndDateChecked ? 'Currently Working' : 'Enter end date(dd/mm/yyyy)'}
+            editable={initalUserDetails.isEndDateChecked ? false : true}
+            placeholder={initalUserDetails.isEndDateChecked ? 'Currently Working' : 'Enter end date(dd/mm/yyyy)'}
             error={error.endDate}
         />
         <CustomCheckbox
-        isChecked={isEndDateChecked}
+        isChecked={initalUserDetails.isEndDateChecked}
         onPress={handleEnDateCheck}
         label="Currently Working"
         />
@@ -591,9 +698,9 @@ const Work = (props) => {
 
         <InputFields 
             label={'Office Address*'} 
-            value={officeAddress} 
+            value={initalUserDetails.officeAddress} 
             keyboardType={'default'}
-            onFocus={() => setError(prev => ({...prev, address: ''}))} 
+            onFocus={() => {setError(prev => ({...prev, address: ''})); setIsFocus(true);}}
             onBlur={()=> validateAddress()}
             // onChangeText={setAddress}
             onChangeText={(text) => {
@@ -602,17 +709,18 @@ const Work = (props) => {
                 // } else {
                 //   setError(prev => ({ ...prev, address: '' }));
                 // }
-                setOfficeAddress(text);
-                setIsChangeDetect(true);
-
+                // setOfficeAddress(text);
+                // setIsChangeDetect(true);
+                setInitialUserDetails(prev => ({...prev, officeAddress:text}));
+                setIsWorkChangeDetect(true);
               }}
-            editable={isAddressChecked ? false : true}
+            editable={initalUserDetails.isAddressChecked ? false : true}
             maxLength={150}
             placeholder={'Enter Full Address'}
             error={error.address}
         />
         <CustomCheckbox
-        isChecked={isAddressChecked}
+        isChecked={initalUserDetails.isAddressChecked}
         onPress={handleAddressCheck}
         label="Remote"
         />
@@ -628,7 +736,7 @@ const Work = (props) => {
               onCancel={hideDatePicker}
         />
     </ScrollView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -644,4 +752,4 @@ const styles = StyleSheet.create({
   
   });
 
-export default Work
+export default Work;

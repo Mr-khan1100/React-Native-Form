@@ -1,67 +1,66 @@
-import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, ScrollView, Button, Alert, Modal } from 'react-native';
-import React, { useContext, useEffect, useState } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import  GenderSelectionModal  from '../utils/GenderModal';
 import PhoneNumberInput from '../utils/PhoneNumberInput';
 import FormBlueButton from '../utils/FormBlueButton';
 import InputFields from '../utils/InputFields';
-import FormContext, { FormProvider } from '../context/FormContext';
-import { getData, storeData } from '../services/storageService';
+import FormContext from '../context/FormContext';
+import { getData, removeData, storeData } from '../services/storageService';
+import { useFocusEffect } from '@react-navigation/native';
 
 const Personal = (props) => {
-    const {userDetails, setUserDetails, setIsPersonalDone, setIsWorkDone,  initalUserDetails, setInitialUserDetails} = useContext(FormContext);
-
-    const [fullName, setFullName] = useState('');
-    const [email, setEmail] = useState('');
-    const [userEmail, setUserEmail] = useState('');
-    const [dob, setDob] = useState('');
-    const [gender, setGender] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [selectedCountry, setSelectedCountry] = useState({code :'+91', flag:'🇮🇳', initial:'IN', phoneLength:10 });
-    const [marriageStatus, setMarriageStatus] = useState('')
-    const [address, setAddress] = useState('');
+    const {userDetails, setUserDetails, isChangeDetect, setIsChangeDetect,  initalUserDetails, setInitialUserDetails, handleStore, userEmail, setUserEmail} = useContext(FormContext);
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [genderModalVisible, setGenderModalVisible] = useState(false);
     const [MerriageModalVisible, setMerriageModalVisible] = useState(false);
-    const [isChangeDetect, setIsChangeDetect] = useState(false);
     const [showEmailModal, setShowEmailModal] = useState(true);
+    const [isFocus, setIsFocus] = useState(false);
     const [error, setError] = useState({name:'', email:'', dob:'', gender:'', phoneNumber:'', marriage:'', address:'',userEmail:''});
 
-    useEffect(()=>{
-      setFullName(userDetails.fullName || '');
-      setEmail(userDetails.email || '');
-      setDob(userDetails.dob || '');
-      setGender(userDetails.gender || '');
-      setPhoneNumber(userDetails.phoneNumber || '');
-      setSelectedCountry({code : userDetails.selectedCountry?.code || '+91', 
-        flag:userDetails.selectedCountry?.flag || '🇮🇳', 
-        initial:userDetails.selectedCountry?.initial ||'IN', 
-        phoneLength:userDetails.selectedCountry?.phoneLength || 10 
-      });
-      setMarriageStatus(userDetails.marriageStatus || '');
-      setAddress(userDetails.address || '');
-
-    },[userDetails]);
 
     useEffect(() => {
       setShowEmailModal(true);
     }, []);
 
+    useFocusEffect(
+      useCallback(() => {
+        const hasNoErrors = Object.values(error).every(err => err === '');
+        if(!isFocus && hasNoErrors){
+        console.log('focus here');
+        
+          setIsChangeDetect(false);
+        }
+        return () => {
+         
+          console.log('Screen unfocused - cleanup');
+        };
+      }, [isFocus, error]) 
+    );
+
+    // useEffect(() => {
+    //   const hasNoErrors = Object.values(error).every(err => err === '');
+    //   if (!isFocus && hasNoErrors) {
+    //     console.log('Focus lost & no errors -> setting isChangeDetect to false');
+    //     setIsChangeDetect(false);
+    //   }
+    // }, [isFocus, error.phoneNumber , initalUserDetails, isChangeDetect]); 
+    
+    
+
     const validateName = () => {
-        const trimmedName = fullName.trim();
+        setIsFocus(false);
+        const trimmedName = initalUserDetails.fullName.trim();
         const nameParts = trimmedName.split(/\s+/); // Split by spaces
         const nameRegex = /^[a-zA-Z]+$/;
-    
-        if(trimmedName=='' || trimmedName.length == 0){
+        if(!trimmedName){
             setError((prev) => ({ ...prev, name: 'Name is required' }));
           return 'Name is required';
         }
-
         else if (trimmedName.length < 4) {
           setError((prev) => ({ ...prev, name: 'Name must be at least 4 characters long.' }));
           return 'Name must be at least 4 characters long.';
         }
-    
         else if (nameParts.length < 3) {
           setError((prev) => ({
             ...prev,
@@ -69,7 +68,6 @@ const Personal = (props) => {
           }));
           return  'Please enter first name, middle name, and last name.';
         }
-    
        else  if (!nameParts.every((part) => nameRegex.test(part))) {
           setError((prev) => ({
             ...prev,
@@ -80,34 +78,61 @@ const Personal = (props) => {
         else{
           console.log('got here');
           setError((prev) => ({ ...prev, name: '' }));
-          setUserDetails((prev) => ({...prev, fullName: trimmedName,
-          }))
-          // const { trimmedName } = formData;
-          handleStore();
-          return ''
+          setUserDetails((prev) => {
+            const updatedDetails = { ...prev, fullName: trimmedName };
+              handleStore(updatedDetails);
+              return updatedDetails;
+          });
+          return '';
         }
-        
-    };
+      };
 
-    const validateEmail = () => {
+    const validateEmail = async() => {
+        setIsFocus(false);
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!userDetails.email.trim()) {
+        const newEmail = initalUserDetails.email.trim();
+        if (!newEmail) {
           setError((prev) => ({ ...prev, email: 'Email is required.' }));
           return 'Email is required.';
-        } else if (!emailRegex.test(userDetails.email)) {
+        } else if (!emailRegex.test(newEmail)) {
           setError((prev) => ({ ...prev, email: 'Invalid email format.' }));
           return 'Invalid email format.';
-        } else {
-
+        } 
+        // else {
           setError((prev) => ({ ...prev, email: '' }));
-          setUserDetails((prev) => ({...prev, email: userDetails.email,
-          }))
-          handleStore();
-          return ''
-        }
-    };
+        try {
+          // Check if email is changing
+          if (newEmail !== userEmail) {
+            const existingData = await getData(userEmail);
 
-    const validateDob = () =>{
+            await storeData(newEmail, existingData || { ...initalUserDetails, email: newEmail });
+
+            if (existingData) await removeData(userEmail);
+
+            setUserEmail(newEmail);
+            setUserDetails(prev => ({ ...prev, email: newEmail }));
+            setInitialUserDetails(prev => ({ ...prev, email: newEmail }));
+      
+            // Explicitly save with new key
+            await storeData(newEmail, { ...userDetails, email: newEmail });
+          } else {
+            // Regular save if email unchanged
+            const updatedDetails = { ...userDetails, email: newEmail };
+            await handleStore(updatedDetails);
+            setUserDetails(updatedDetails);
+          }
+        } catch (error) {
+          console.error('Email update error:', error);
+          setError((prev) => ({ ...prev, email: 'Error updating email' }));
+          return 'Storage error';
+        }
+      
+        return '';
+      };
+
+    const validateDob = (dob) =>{
+      setIsFocus(false);
+      // const dob = initalUserDetails.dob;
         if (!dob) {
           setError((prev) => ({ ...prev, dob: 'Date of birth is required.' }));
             return 'Date of birth is required.';
@@ -123,65 +148,60 @@ const Personal = (props) => {
           }
 
         setError((prev) => ({ ...prev, dob: '' }));
-        setUserDetails((prev) => ({...prev, email: dob,
-        }))
-        handleStore();
+        // setUserDetails((prev) => ({...prev, dob: dob,
+        // }));
+        // handleStore();
+        setUserDetails((prev) => {
+          const updatedDetails = { ...prev, dob: dob };
+            handleStore(updatedDetails);
+            return updatedDetails;
+        });
+        setIsFocus(false);
         return '';
-          
-      
-    }
+      };
 
 
     const isBeforeStartAndEndDate = dateString => {
       // If neither startDate nor endDate exists, nothing to validate
-      if (!userDetails.startDate && !userDetails.endDate) {
+      if (!initalUserDetails.startDate && !initalUserDetails.endDate) {
         return false;
       }
-      
+
       const [day, month, year] = dateString.split('/').map(Number);
       const dateToCheck = new Date(year, month - 1, day);
-    
-      if (userDetails.startDate) {
-        const [sDay, sMonth, sYear] = userDetails.startDate.split('/').map(Number);
+
+      if (initalUserDetails.startDate) {
+        const [sDay, sMonth, sYear] = initalUserDetails.startDate.split('/').map(Number);
         const startDateObj = new Date(sYear, sMonth - 1, sDay);
         return dateToCheck >= startDateObj;
       }
-    
-      if (userDetails.endDate) {
-        const [eDay, eMonth, eYear] = userDetails.endDate.split('/').map(Number);
+      if (initalUserDetails.endDate && initalUserDetails.endDate !== 'Currently Working') {
+        const [eDay, eMonth, eYear] = initalUserDetails.endDate.split('/').map(Number);
         const endDateObj = new Date(eYear, eMonth - 1, eDay);
         return dateToCheck >= endDateObj;
-        
+
       }
       return false;
     };
-    
-    const validateGender = () => {
-        if (!gender) {
-          setError(prev => ({ ...prev, gender: 'Gender is required.' }));
-          return 'Gender is required.';
-        }
-        setError(prev => ({ ...prev, gender: '' }));
-        return '';
-
-      };
 
     const showDatePicker = () => {
         setDatePickerVisibility(true);
     };
-    
+
     const hideDatePicker = () => {
         setDatePickerVisibility(false);
     };
 
     const handleConfirm = selectedDate => {
+        const formattedDate = formatDate(selectedDate);
         setError(prev => ({...prev, dob: ''}));
-        setIsChangeDetect(true)
-        setDob(formatDate(selectedDate));
+        setIsChangeDetect(true);
+        setInitialUserDetails(prev => ({...prev, dob : formattedDate}));
         hideDatePicker();
-        validateDob();
+        // setIsFocus(false);
+        validateDob(formattedDate);
     };
-    
+
     const formatDate = date => {
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -194,14 +214,12 @@ const Personal = (props) => {
         if (!datePattern.test(date)) {
           return false;
         }
-    
+
         const [day, month, year] = date.split('/').map(Number);
-    
         const currentYear = new Date().getFullYear();
         if (year < 1900 || year > currentYear) {
           return false;
         }
-    
         const daysInMonth = {
           1: 31,
           2: year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28,
@@ -216,10 +234,10 @@ const Personal = (props) => {
           11: 30,
           12: 31,
         };
-    
+
         return day >= 1 && day <= daysInMonth[month];
     };
-    
+
     const isDateInFuture = dateString => {
         const [day, month, year] = dateString.split('/').map(Number);
         const date = new Date(year, month - 1, day);
@@ -229,61 +247,77 @@ const Personal = (props) => {
 
 
     const validatePhoneNumber = () => {
-        
-        const cleanedNumber = phoneNumber?.replace(/\D/g, ''); // Remove non-digits
+        setIsFocus(false);
+        const cleanedNumber = initalUserDetails.phoneNumber?.replace(/\D/g, ''); // Remove non-digits
 
         const countryValidations = {
-            'US': { 
+            'US': {
               regex: /^[2-9]\d{9}$/,
               error: "US number: 10 digits starting with 2-9"
             },
-            'IN': { 
+            'IN': {
               regex: /^[6-9]\d{9}$/,
               error: "Indian number: 10 digits starting with 6-9"
             },
-            'GB': { 
+            'GB': {
               regex: /^(?:(?:\(?(?:0(?:0|11)\)?[\s-]?\(?|\+)44\)?[\s-]?(?:(?:0\)?[\s-]?)?)|)(?:\d{5}[\s-]?\d{4,5}|\d{10})$)/,
               error: "UK number: 10 digits in valid format"
             },
-            'AU': { 
+            'AU': {
               regex: /^[1-9]\d{8}$/,
               error: "Australian number: 9 digits starting with 1-9"
             },
-            'CA': { 
+            'CA': {
               regex: /^[2-9]\d{9}$/,
               error: "Canadian number: 10 digits starting with 2-9"
             },
-            'DE': { 
+            'DE': {
               regex: /^[1-9]\d{10}$/,
               error: "German number: 11 digits starting with 1-9"
             },
-            'FR': { 
+            'FR': {
               regex: /^[1-9]\d{8}$/,
               error: "French number: 9 digits starting with 1-9"
-            }
+            },
         };
 
-        const validation = countryValidations[selectedCountry.initial];
+        const validation = countryValidations[initalUserDetails.selectedCountry.initial];
         if(!cleanedNumber){
             setError(prev => ({
                 ...prev,
                 phoneNumber: `Phone number is required.`}))
+            // setIsChangeDetect(true);
             return  `Phone number is required.`;
         }
-        if (cleanedNumber.length !== selectedCountry.phoneLength) {
+        if (cleanedNumber.length !== initalUserDetails.selectedCountry.phoneLength) {
           setError(prev => ({
             ...prev,
-            phoneNumber: `Phone number must be ${selectedCountry.phoneLength} digits`
+            phoneNumber: `Phone number must be ${initalUserDetails.selectedCountry.phoneLength} digits`
           }));
-          return `Phone number must be ${selectedCountry.phoneLength} digits`
+          // setIsChangeDetect(true);
+          return `Phone number must be ${initalUserDetails.selectedCountry.phoneLength} digits`
         } else if(validation && !validation.regex.test(cleanedNumber)){
             setError(prev => ({
                 ...prev,
-                phoneNumber: validation.error
+                phoneNumber: validation.error,
               }));
+            // setIsChangeDetect(true);
               return validation.error;
         } else{
           setError(prev => ({ ...prev, phoneNumber: '' }));
+          // setUserDetails((prev) => ({...prev, phoneNumber: cleanedNumber,
+          // }));
+          // handleStore();
+          setUserDetails((prev) => {
+            const updatedDetails = { ...prev, phoneNumber: cleanedNumber };
+              handleStore(updatedDetails);
+              return updatedDetails;
+          });
+          setUserDetails((prev) => {
+            const updatedDetails = { ...prev,  selectedCountry: initalUserDetails.selectedCountry };
+              handleStore(updatedDetails);
+              return updatedDetails;
+          });
           return '';
         }
     };
@@ -291,12 +325,14 @@ const Personal = (props) => {
     const handlePhoneNumberChange = (text) => {
         // Remove all non-digit characters
         const cleanedNumber = text.replace(/\D/g, '');
-        setPhoneNumber(cleanedNumber);
+        setInitialUserDetails(prev => ({...prev, phoneNumber:cleanedNumber}));
+        setIsChangeDetect(true);
     };
 
 
     const validateAddress = () => {
-        const trimmedAddress = address.trim();
+      setIsFocus(false);
+        const trimmedAddress = initalUserDetails.address.trim();
         const addressRegex = /^[a-zA-Z0-9&.,\-\s]+$/;
 
         if(trimmedAddress == '' || trimmedAddress.length == 0){
@@ -309,8 +345,15 @@ const Personal = (props) => {
         }
         
         setError((prev) => ({ ...prev, address: '' }));
+        // setUserDetails((prev) => ({...prev, address: trimmedAddress,
+        // }));
+        setUserDetails((prev) => {
+          const updatedDetails = { ...prev, address: trimmedAddress };
+            handleStore(updatedDetails);
+            return updatedDetails;
+        });
         return '';
-    }
+      };
 
  
 
@@ -318,13 +361,15 @@ const Personal = (props) => {
     
         const newErrors = {
           name: validateName(),
-          email: validateEmail(),
-          dob: validateDob(),
+          email: await validateEmail(),
+          dob: validateDob(initalUserDetails.dob),
           phoneNumber: validatePhoneNumber(),
           address: validateAddress(),
         };
      
         setError(newErrors);
+        console.log(newErrors,'new Errors ');
+        
         console.log(newErrors);
         
       
@@ -346,45 +391,24 @@ const Personal = (props) => {
             );
           return;
         }else{
-          setUserDetails((prev) => ({...prev, fullName: fullName,
-            email: email,
-            dob: dob,
-            gender: gender,
-            phoneNumber: phoneNumber,
-            selectedCountry: {
-              ...prev.selectedCountry, 
-              code: selectedCountry.code,
-              flag: selectedCountry.flag,
-              initial: selectedCountry.initial,
-              phoneLength: selectedCountry.phoneLength,
-            },
-            marriageStatus: marriageStatus,
-            address:address,
-            isPersonalDone: true
-          }))
+          console.log('click next 1');
+          
           setIsChangeDetect(false);
-          setIsPersonalDone(true)
+          // setIsPersonalDone(true);
+          setInitialUserDetails(prev => ({...prev, isPersonalDone:true}));
+          setUserDetails((prev) => {
+            const updatedDetails = { ...prev, isPersonalDone:true};
+              handleStore(updatedDetails);
+              return updatedDetails;
+          });
+
+          console.log(userDetails,'userDetails on next');
+          
           props.navigation.navigate('Work');
 
         }
     };
 
-
-    const handleStore = async () => {
-      // Ensure email is present and validated
-      if (!userEmail) {
-        console.error('Cannot save data: Email not set');
-        return;
-      }
-    
-      try {
-        // 3. Save merged data
-        await storeData(userEmail, userDetails);
-        console.log('Data saved for:', userEmail);
-      } catch (error) {
-        console.error('Save failed:', error);
-      }
-    };
 
     const handleContinue = async () => {
       if (!userEmail) {
@@ -399,22 +423,32 @@ const Personal = (props) => {
         const existingData = await getData(userEmail);
         
         if (existingData) {
+          console.log(existingData, 'existing data');
+          
           // Merge stored data with initial state to preserve any new fields
           setUserDetails(prev => ({
             ...prev, // Initial state defaults
             ...existingData, // Stored data
-            email: userEmail // Ensure email matches key
+            email: userEmail,
           }));
-          console.log(userDetails,'user detils on continue');
+          setInitialUserDetails(prev => ({
+            ...prev, // Initial state defaults
+            ...existingData, // Stored data
+            email: userEmail,
+          }));
+          
           
         } else {
           // Create new entry with email and initial state
           const newUser = {
-            ...userDetails, // Initial empty values
-            email: userEmail
+            ...initalUserDetails, // Initial empty values
+            email: userEmail,
           };
+          console.log('new user', newUser);
+          
+          setInitialUserDetails(newUser);
           await storeData(userEmail, newUser);
-          setUserDetails(newUser);
+          // setUserDetails(newUser);
         }
         
         setShowEmailModal(false);
@@ -425,23 +459,17 @@ const Personal = (props) => {
       }
     };
 
-    useEffect(() => {
-      if(isChangeDetect){
-        setIsPersonalDone(false)
-        setIsWorkDone(false)
-      }
-    }, [isChangeDetect])
     
   return (
     <ScrollView style={styles.container}>
        <InputFields 
             label={'Full Name*'} 
-            value={fullName} 
+            value={initalUserDetails.fullName} 
             keyboardType={'default'}
-            onFocus={() => setError(prev => ({...prev, name: ''}))} 
+            onFocus={() => {setError(prev => ({...prev, name: ''})); setIsFocus(true);}} 
             onBlur={()=> validateName()}
             onChangeText={(text) => {
-              setFullName(text);
+              setInitialUserDetails(prev => ({...prev, fullName:text}));
               setIsChangeDetect(true);
             }}
             editable={true}
@@ -452,12 +480,13 @@ const Personal = (props) => {
 
         <InputFields 
             label={'Email*'} 
-            value={email} 
+            value={initalUserDetails.email} 
             keyboardType={'email-address'}
-            onFocus={() => setError(prev => ({...prev, email: ''}))} 
-            onBlur={()=> validateEmail()}
+            onFocus={() => {setError(prev => ({...prev, email: ''})); setIsFocus(true);}} 
+            onBlur={async()=> await validateEmail()}
             onChangeText={(text) => {
-              setEmail(text); 
+              // setEmail(text); 
+              setInitialUserDetails(prev => ({...prev, email:text.toLowerCase()}));
               setIsChangeDetect(true);
             }}
             maxLength={50}
@@ -468,12 +497,12 @@ const Personal = (props) => {
 
         <InputFields 
             label={'Date of birth*'} 
-            value={dob} 
+            value={initalUserDetails.dob} 
             keyboardType={'phone-pad'}
-            onFocus={() => setError(prev => ({...prev, dob: ''}))} 
-            onBlur={()=> validateDob()}
+            onFocus={() => {setError(prev => ({...prev, dob: ''})); setIsFocus(true);}} 
+            onBlur={()=> validateDob(initalUserDetails.dob)}
             onChangeText={text => {
-                console.log(text,'text');
+                // console.log(text,'text');
                 let sanitizedText = text.replace(/[^0-9]/g, '');
                 let formattedText = '';
                 const currentYear = new Date().getFullYear();
@@ -532,7 +561,9 @@ const Personal = (props) => {
                 if (sanitizedText.length >= 1) formattedText += day;
                 if (sanitizedText.length >= 3) formattedText += '/' + month;
                 if (sanitizedText.length >= 5) formattedText += '/' + year;
-                setDob(formattedText);
+                // setDob(formattedText);
+              
+                setInitialUserDetails(prev => ({...prev, dob:formattedText}));
                 setIsChangeDetect(true);
               }}
             onIconPress={showDatePicker}
@@ -544,11 +575,8 @@ const Personal = (props) => {
 
         <InputFields 
             label={'Gender'} 
-            value={gender} 
+            value={initalUserDetails.gender} 
             keyboardType={'default'}
-            // onFocus={() => setError(prev => ({...prev, gender: ''}))} 
-            // onBlur={()=> validateGender()}
-            // onChangeText={(text)=> {setGender(text); setIsChangeDetect(true);}}
             onIconPress={() => setGenderModalVisible(true)}
             iconSource={require('../../assets/Images/DropDownIcon.png')}
             editable={false}
@@ -557,21 +585,17 @@ const Personal = (props) => {
         />
 
         <PhoneNumberInput
-        phoneNumber={phoneNumber}
-        setSelectedCountry={setSelectedCountry}
-        selectedCountry = {selectedCountry}
-        // setPhoneLength = {setPhoneLength}
-        // setcountryInitials = {setcountryInitials}
-        // setCountryCode = {setCountryCode}
+        phoneNumber={initalUserDetails.phoneNumber}
+        handleStore={handleStore}
         onBlur={validatePhoneNumber}
         onChangeText={handlePhoneNumberChange}
-        onFocus={() => setError(prev => ({...prev, phoneNumber: ''}))}
+        onFocus={() => {setError(prev => ({...prev, phoneNumber: ''})); setIsFocus(true);}}
         error={error.phoneNumber}
         />
 
         <InputFields 
             label={'Marital Status'} 
-            value={marriageStatus} 
+            value={initalUserDetails.marriageStatus} 
             keyboardType={'default'}
             onIconPress={() => setMerriageModalVisible(true)}
             iconSource={require('../../assets/Images/DropDownIcon.png')}
@@ -582,12 +606,11 @@ const Personal = (props) => {
 
         <InputFields 
             label={'Address*'} 
-            value={address} 
+            value={initalUserDetails.address} 
             keyboardType={'default'}
-            onFocus={() => setError(prev => ({...prev, address: ''}))} 
+            onFocus={() => {setError(prev => ({...prev, address: ''})); setIsFocus(true);}} 
             onBlur={()=> validateAddress()}
-            // onChangeText={setAddress}
-            onChangeText={(text) => setAddress(text)}
+            onChangeText={(text) => {setInitialUserDetails(prev => ({...prev, address:text})); setIsChangeDetect(true);}}
             editable={true}
             maxLength={150}
             placeholder={'Enter Full Address'}
@@ -599,16 +622,18 @@ const Personal = (props) => {
         <GenderSelectionModal 
         modalVisible={genderModalVisible}
         setModalVisible={setGenderModalVisible}
-        setGender={setGender}
-        setIsChangeDetect = {setIsChangeDetect}
+        handleStore={handleStore}
+        // setGender={setInitialUserDetails}
+        // setIsChangeDetect = {setIsChangeDetect}
         isGender={true}
         />
 
         <GenderSelectionModal 
         modalVisible={MerriageModalVisible}
         setModalVisible={setMerriageModalVisible}
-        setMarriageStatus={setMarriageStatus}
-        setIsChangeDetect = {setIsChangeDetect}
+        handleStore={handleStore}
+        // setMarriageStatus={setMarriageStatus}
+        // setIsChangeDetect = {setIsChangeDetect}
         isGender={false}
         />
 
@@ -653,7 +678,7 @@ const Personal = (props) => {
             }}
             value={userEmail}
             onChangeText={(text) => {
-              setUserEmail(text);
+              setUserEmail(text.toLowerCase());
               // if (error) setError('');
             }}
             placeholder="Email Address"

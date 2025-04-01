@@ -12,30 +12,9 @@ import { Alert, TouchableOpacity } from 'react-native';
 const Tab = createMaterialTopTabNavigator();
 
 const AppNavigator = () => {
-  const { isPersonalDone, isWorkDone } = useContext(FormContext);
-  console.log(isPersonalDone,'ispersonal');
+  const { initalUserDetails, isChangeDetect, isWorkChangeDetect } = useContext(FormContext);
+  console.log(isChangeDetect,'isChange');
   
-  // const navigation = useNavigation();
-
-  const LockedTabButton = (props) => {
-    const { isPersonalDone } = useContext(FormContext);
-    const { onPress, accessibilityState, style, children } = props;
-  
-    return (
-      <TouchableOpacity
-        style={style}
-        onPress={() => {
-          if (isPersonalDone) {
-            
-          } else {
-            onPress();
-          }
-        }}
-      >
-        {children}
-      </TouchableOpacity>
-    );
-  };
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <TopBar />
@@ -45,18 +24,22 @@ const AppNavigator = () => {
           name="Work" 
           component={Work} 
           options={{
-            tabBarLabel: !isPersonalDone ? 'Work (Locked)' : 'Work',
+            tabBarLabel: (!isChangeDetect && initalUserDetails.isPersonalDone) ? 'Work' : 'Work (Locked)',
           }}
           listeners={{
             tabPress: e => {
-              if(!isPersonalDone){
-               e.preventDefault(); // <-- this function blocks navigating to screen
-               Alert.alert(
+              if (!isChangeDetect && initalUserDetails.isPersonalDone) {
+                // Allow navigation - do nothing
+                return;
+              }
+              
+              // Otherwise block navigation
+              e.preventDefault();
+              Alert.alert(
                 'IMPORTANT',
-                'Please fill all required field press blue button to save changes and proceed',
+                'Please fill all required fields, check no field is focused, or press blue button to save changes, and then proceed',
                 [{ text: 'OK' }]
               );
-              }
             },
           }}
         />
@@ -64,18 +47,22 @@ const AppNavigator = () => {
           name="Documents" 
           component={Documents}
           options={{
-            tabBarLabel: !isWorkDone ? 'Document (Locked)' : 'Document',
+            tabBarLabel: (!isChangeDetect && !isWorkChangeDetect && initalUserDetails.isWorkDone) ? 'Document' : 'Document (Locked)',
           }}
           listeners={{
             tabPress: e => {
-              if(!isWorkDone){
+              if (!isChangeDetect && !isWorkChangeDetect && initalUserDetails.isWorkDone) {
+                // Allow navigation - do nothing
+                return;
+              }
+              // if(!initalUserDetails.isWorkDone){
                e.preventDefault(); // <-- this function blocks navigating to screen
                Alert.alert(
                 'IMPORTANT',
-                'Please fill all required field press blue button to save changes and proceed',
+                'Please fill all required fields, check no field is focused, or press blue button to save changes, and then proceed',
                 [{ text: 'OK' }]
               );
-              }
+              // }
             },
           }}
         />

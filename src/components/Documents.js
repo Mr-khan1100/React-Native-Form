@@ -5,16 +5,16 @@ import DocumentInput from '../utils/DocumentInput';
 import { pick, types  } from '@react-native-documents/picker'
 import { requestGalleryPermission } from '../utils/AppHooks';
 import { NativeModules } from 'react-native';
-import RNFS from 'react-native-fs';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import { decode } from 'base-64'; 
 import FormContext from '../context/FormContext';
+import NetInfo from '@react-native-community/netinfo';
 
 
 const Documents = (props) => {
-    const {userDetails, setUserDetails,setIsWorkDone} = useContext(FormContext);
-    const [aadharFile, setAadharFile] = useState({name: userDetails.aadharFile?.name || '', type: userDetails.aadharFile?.type ||'', uri: userDetails.aadharFile?.uri || '', blob: userDetails.aadharFile?.blob || ''});
-    const [panFile, setPanFile] = useState({name: userDetails.panFile?.name || '', type: userDetails.panFile?.type || '', uri: userDetails.panFile?.uri || '', blob: userDetails.panFile?.blob || ''});
+    const {setUserDetails, initalUserDetails, setInitialUserDetails, handleStore} = useContext(FormContext);
+    // const [aadharFile, setAadharFile] = useState({name: userDetails?.aadharFile?.name || '', type: userDetails?.aadharFile?.type ||'', uri: userDetails?.aadharFile?.uri || '', blob: userDetails?.aadharFile?.blob || ''});
+    // const [panFile, setPanFile] = useState({name: userDetails?.panFile?.name || '', type: userDetails?.panFile?.type || '', uri: userDetails?.panFile?.uri || '', blob: userDetails?.panFile?.blob || ''});
     const [error, setError] = useState({Aadhar:'', PanCard:''});
     const { ManageExternalStorage } = NativeModules;
       
@@ -94,7 +94,7 @@ const Documents = (props) => {
                     name: pickResults.name,
                     type: pickResults.type,
                     uri: pickResults.uri,
-                    blob: blob
+                    blob: blob,
                 }
             });
     
@@ -102,7 +102,8 @@ const Documents = (props) => {
           }
         } catch (err) {
           console.error('Error picking file:', err);
-          setError((prev) => ({ ...prev, [field]: `${field} is required` }));
+          // setError((prev) => ({ ...prev, [field]: `${field} is required` }));
+          return `${field} is required`;
           // Alert.alert('Message', `${err}`);
         }
       };
@@ -111,73 +112,115 @@ const Documents = (props) => {
         const result =  await handleFileSelect('Aadhar');
         console.log(result, 'result');
         if(result.success){
-          setAadharFile({
-            name: result.data.name,
-            type: result.data.type,
-            uri: result.data.uri,
-            blob: result.data.blob
-          });
           setError(prev => ({...prev, Aadhar: ''}));
+          setInitialUserDetails(prev => ({...prev,
+            aadharFile: {
+              ...prev.aadharFile,  // Preserve existing properties
+              name: result.data.name,
+              type: result.data.type,
+              uri: result.data.uri,
+              blob: result.data.blob,
+            },
+          }));
+          setUserDetails((prev) => {
+            const updatedDetails = {...prev,
+              aadharFile: {
+                ...prev.aadharFile,  // Preserve existing properties
+                name: result.data.name,
+                type: result.data.type,
+                uri: result.data.uri,
+                blob: result.data.blob,
+              },
+            };
+              handleStore(updatedDetails);
+              return updatedDetails;
+          });
         }
-        
+        else {
+          setInitialUserDetails(prev => ({...prev,
+            aadharFile: {
+              ...prev.aadharFile,  // Preserve existing properties
+              name: '',
+              type: '',
+              uri: '',
+              blob: '',
+            },
+          }));
+          setError(prev => ({ ...prev, Aadhar: result }));
+        }
 
-      }
+      };
 
       const handlePanSelection = async() =>{
         const result =  await handleFileSelect('PanCard');
         console.log(result, 'result');
 
         if(result.success){
-          setPanFile({
-            name: result.data.name,
-            type: result.data.type,
-            uri: result.data.uri,
-            blob: result.data.blob
-
-          });
           setError(prev => ({...prev, PanCard: ''}));
+          setInitialUserDetails(prev => ({...prev,
+            panFile: {
+              ...prev.panFile,  // Preserve existing properties
+              name: result.data.name,
+              type: result.data.type,
+              uri: result.data.uri,
+              blob: result.data.blob,
+            },
+          }));
+          setUserDetails((prev) => {
+            const updatedDetails = {...prev,
+              panFile: {
+                ...prev.panFile,  // Preserve existing properties
+                name: result.data.name,
+                type: result.data.type,
+                uri: result.data.uri,
+                blob: result.data.blob,
+              },
+            };
+              handleStore(updatedDetails);
+              return updatedDetails;
+          });
         }
+        else {
+          setInitialUserDetails(prev => ({...prev,
+            panFile: {
+              ...prev.panFile,  // Preserve existing properties
+              name: '',
+              type: '',
+              uri: '',
+              blob: '',
+            },
+          }));
+          setError(prev => ({ ...prev, PanCard: result }));
+        }
+      };
 
-      }
-
-      const handleSubmit = () =>{
-        const isAadharEmpty = Object.values(aadharFile).some(x => x === null || x === '');
-        const isPanCardEmpty = Object.values(panFile).some(x => x === null || x === '');
+      const handleSubmit = async() =>{
+        const isAadharEmpty = Object.values(initalUserDetails.aadharFile).some(x => x === null || x === '');
+        const isPanCardEmpty = Object.values(initalUserDetails.panFile).some(x => x === null || x === '');
         
 
         if(isAadharEmpty){
-          setError(prev=> ({...prev, Aadhar:'Aadhar Card is required' }))
+          setError(prev=> ({...prev, Aadhar:'Aadhar Card is required' }));
         } 
         if(isPanCardEmpty){
-          setError(prev=> ({...prev, PanCard:'Pan Card is required' }))
+          setError(prev=> ({...prev, PanCard:'Pan Card is required' }));
         }
         if(!isAadharEmpty && !isPanCardEmpty){
-          setUserDetails((prev) => ({...prev, 
-            aadharFile: {
-              ...prev.aadharFile, 
-              name: aadharFile.name,
-              type: aadharFile.type,
-              uri: aadharFile.uri,
-              blob: aadharFile.blob,
-            },
-            panFile: {
-              ...prev.panFile, 
-              name: panFile.name,
-              type: panFile.type,
-              uri: panFile.uri,
-              blob: panFile.blob,
-            },
-          }))
-          Alert.alert('Success', 'Form Submitted Successfully.')
+          const netState = await NetInfo.fetch();
+          if (!netState.isConnected || !netState.isInternetReachable) {
+            Alert.alert('No Internet Connection', 'Please check your connection and try again.');
+            return;
+          }
+          Alert.alert('Success', 'Form Submitted Successfully.');
         }
-      }
+      };
 
   return (
     <View style={styles.container}>
         <DocumentInput 
           label={'Aadhaar*'}
           isFileUpload = {true} 
-          value={aadharFile.name}
+          value={initalUserDetails.aadharFile.name}
           iconSource={require('../../assets/Images/fileIcon.png')}  
           onPress={handleAadharSelection}   
           error={error.Aadhar}
@@ -186,7 +229,7 @@ const Documents = (props) => {
         <DocumentInput 
           label={'Pan Card*'}
           isFileUpload = {true} 
-          value={panFile.name}
+          value={initalUserDetails.panFile.name}
           iconSource={require('../../assets/Images/fileIcon.png')}  
           onPress={handlePanSelection}   
           error={error.PanCard}
@@ -220,4 +263,4 @@ const styles = StyleSheet.create({
   
   });
 
-export default Documents
+export default Documents;
