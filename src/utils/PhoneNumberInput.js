@@ -1,7 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, StyleSheet, Image } from 'react-native';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, StyleSheet, Image, unstable_batchedUpdates } from 'react-native';
 import { CountryCodeList } from './CountryCodeList'; // Custom country data
 import FormContext from '../context/FormContext';
+import { useFocusEffect } from '@react-navigation/native';
 
 
 const PhoneNumberInput = ({
@@ -11,11 +12,13 @@ const PhoneNumberInput = ({
     onBlur,
     onFocus,
     onChangeText,
+    handleStore,
     // setcountryInitials,
-    setSelectedCountry,
-    selectedCountry,
+    // setSelectedCountry,
+    // selectedCountry,
     error,
 }) => {
+  const {initalUserDetails, setInitialUserDetails, setUserDetails, setIsChangeDetect} = useContext(FormContext);
   // const {userDetails, setUserDetails} = useContext(FormContext);
   // const [selectedCountry, setSelectedCountry] = useState({code : '+91', flag: '🇮🇳',initial:'IN', phoneLength: 10 });
   const [modalVisible, setModalVisible] = useState(false);
@@ -33,21 +36,55 @@ const PhoneNumberInput = ({
   };
 
 
-    const selectCountry = (country) => {
+  const isCountryUpdated = useRef(false);
+
+    const selectCountry = async(country) => {
+      isCountryUpdated.current = true;
         const newCountry = { 
         code: country.dial_code, 
         flag: country.flag,
         initial: country.code, 
-        phoneLength: country.phone_length 
+        phoneLength: country.phone_length, 
         };
-        setSelectedCountry(newCountry);
+        // setSelectedCountry(newCountry);
+        setInitialUserDetails(prev => ({...prev, selectedCountry:newCountry}));
+        // setUserDetails((prev) => ({...prev, selectedCountry: newCountry}));
+      //   setInitialUserDetails(prev => {
+      //     const updatedState = { ...prev, selectedCountry: newCountry };
+      //     setTimeout(() => {
+      //         if (onBlur) onBlur();
+      //     }, 0);  // Ensures it runs AFTER the state update
+      //     return updatedState;
+      // });
+
+        // setUserDetails((prev) => {
+        //   const updatedDetails = { ...prev,  selectedCountry: newCountry };
+        //     handleStore(updatedDetails);
+        //     return updatedDetails;
+        // });
+
+  
+       
+        setIsChangeDetect(true);
         setModalVisible(false);
-        
+        // if (onBlur) onBlur();
         // Trigger validation with new country's phone length
         // if (onBlur) onBlur(phoneNumber, newCountry.phoneLength, newCountry.initial);
-        if (onBlur) onBlur();
+        console.log(initalUserDetails.selectedCountry, 'selected country');
+
 
     };
+
+    useEffect(() => {
+      if (isCountryUpdated.current) {
+          isCountryUpdated.current = false; // Reset after running
+          if (initalUserDetails.selectedCountry) {
+        setIsChangeDetect(true);
+
+              onBlur();
+          }
+      }
+  }, [initalUserDetails.selectedCountry]);
 
   const filteredCountries = CountryCodeList.filter((country) =>
     country.name.toLowerCase().includes(search.toLowerCase())
@@ -59,8 +96,8 @@ const PhoneNumberInput = ({
       <View style={styles.inputRow}>
         {/* Country Selector */}
         <TouchableOpacity style={styles.countrySelector} onPress={openModal}>
-          <Text style={styles.flag}>{selectedCountry.flag}</Text>
-          <Text style={styles.code}>{selectedCountry.code}</Text>
+          <Text style={styles.flag}>{initalUserDetails.selectedCountry.flag}</Text>
+          <Text style={styles.code}>{initalUserDetails.selectedCountry.code}</Text>
           <Image source={require('../../assets/Images/DropDownIcon.png')} style={styles.icon} />
         </TouchableOpacity>
 

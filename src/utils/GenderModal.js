@@ -1,17 +1,33 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import FormContext from '../context/FormContext';
 
 const genders = ['Male', 'Female', 'Other'];
 const marriageStatus = ['Single', 'Engaged', 'Married']
 
-  const GenderSelectionModal = ({ modalVisible, setModalVisible, setGender, setMarriageStatus, setIsChangeDetect, isGender }) => {
+  const GenderSelectionModal = ({ modalVisible, setModalVisible, isGender, handleStore}) => {
+  const {setIsChangeDetect, setInitialUserDetails, setUserDetails} = useContext(FormContext);
+
   const handleSelect = (item) => {
     if(isGender){
-      setGender(item);
-      setIsChangeDetect(true);
+      // setGender(item);
+      // setGender(prev => ({...prev, gender:item}));
+      setInitialUserDetails(prev => ({...prev, gender:item}));
+      setUserDetails((prev) => {
+        const updatedDetails = { ...prev, gender: item };
+          handleStore(updatedDetails);
+          return updatedDetails;
+      });
+      // setIsChangeDetect(true);
     }else{
-      setMarriageStatus(item);
-      setIsChangeDetect(true);
+      // setMarriageStatus(item);
+      setInitialUserDetails(prev => ({...prev, marriageStatus:item}));
+      setUserDetails((prev) => {
+        const updatedDetails = { ...prev, marriageStatus: item };
+          handleStore(updatedDetails);
+          return updatedDetails;
+      });
+      // setIsChangeDetect(true);
     }
     setModalVisible(false);
   };

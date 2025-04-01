@@ -1,11 +1,10 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { storeData } from '../services/storageService';
 
 const FormContext = createContext();
 
-export const FormProvider = ({ children }) => {
-  
-  const [userDetails, setUserDetails] = useState({
+const initialFormState = {
     fullName: '',
     email: '',
     dob: '',
@@ -24,24 +23,55 @@ export const FormProvider = ({ children }) => {
     aadharFile:{name:'', type:'', uri:'', blob: ''},
     panFile:{name:'', type:'', uri:'', blob: ''},
     isPersonalDone:false,
-    isWordDone:false,
-  });
+    isWorkDone:false,
+};
 
-  const [isPersonalDone, setIsPersonalDone] = useState(userDetails.isPersonalDone || false);
-  const [isWorkDone, setIsWorkDone] = useState(userDetails.isWordDone || false);
-  const [isLoading, setIsLoading] = useState(false)
+export const FormProvider = ({ children }) => {
+  
+  const [initalUserDetails, setInitialUserDetails] = useState(initialFormState);
+  const [userDetails, setUserDetails] = useState(initialFormState);
+  const [userEmail, setUserEmail] = useState('');
+  const [isChangeDetect, setIsChangeDetect] = useState(false);
+  const [isWorkChangeDetect, setIsWorkChangeDetect] = useState(false);
+  // const [isPersonalDone, setIsPersonalDone] = useState(userDetails?.isPersonalDone || false);
+  // const [isWorkDone, setIsWorkDone] = useState(userDetails?.isWordDone || false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleStore = async (updatedUserDetails) => {
+        // Ensure email is present and validated
+        if (!userEmail) {
+          console.error('Cannot save data: Email not set');
+          return;
+        }
+      
+        try {
+          await storeData(userEmail, updatedUserDetails);
+          // console.log('Data saved for:', initalUserDetails.email);
+        } catch (error) {
+          console.error('Save failed:', error);
+        }
+      };
 
 
 
   return (
     <FormContext.Provider value={{ 
-        isPersonalDone, 
-        setIsPersonalDone, 
+        // isPersonalDone, 
+        // setIsPersonalDone, 
         userDetails, 
         setUserDetails, 
-        isWorkDone, 
-        setIsWorkDone,
-        setIsLoading
+        // isWorkDone, 
+        // setIsWorkDone,
+        setIsLoading,
+        initalUserDetails,
+        setInitialUserDetails,
+        isChangeDetect,
+        setIsChangeDetect,
+        isWorkChangeDetect,
+        setIsWorkChangeDetect,
+        handleStore,
+        userEmail,
+        setUserEmail,
         }}>
             {isLoading ? (
         <View
