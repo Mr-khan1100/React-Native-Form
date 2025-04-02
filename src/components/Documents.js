@@ -21,19 +21,19 @@ const Documents = (props) => {
     const MAX_FILE_SIZE_MB = 2; // 2MB maximum
     const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
       // Check permission
-      async function checkPermission() {
-        const hasPermission = await ManageExternalStorage.hasPermission();
-        console.log(hasPermission);
+      // async function checkPermission() {
+      //   const hasPermission = await ManageExternalStorage.hasPermission();
+      //   console.log(hasPermission);
         
-        if (!hasPermission) {
-          requestPermission();
-        }
-      }
+      //   if (!hasPermission) {
+      //     requestPermission();
+      //   }
+      // }
       
       // Request permission
-      function requestPermission() {
-        ManageExternalStorage.requestPermission();
-      }
+      // function requestPermission() {
+      //   ManageExternalStorage.requestPermission();
+      // }
 
 
       const handleFileSelect = async (field) => {
@@ -41,9 +41,12 @@ const Documents = (props) => {
 
           setError(prev => ({...prev, [field]: ''}));
 
-          await checkPermission();
+          // await checkPermission();
           const isPermitted = await requestGalleryPermission();
-          if (!isPermitted) return;
+          if (!isPermitted){
+            Alert.alert('Permission Denied', 'Storage permission is required to select file.');
+            return;
+          } 
     
           // Pick file(s) with allowed types
           const [pickResults] = await pick({

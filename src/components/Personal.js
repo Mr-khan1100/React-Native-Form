@@ -333,15 +333,15 @@ const Personal = (props) => {
     const validateAddress = () => {
       setIsFocus(false);
         const trimmedAddress = initalUserDetails.address.trim();
-        const addressRegex = /^[a-zA-Z0-9&.,\-\s]+$/;
+        const addressRegex = /^[a-zA-Z0-9&.,\-\s\/]+$/;
 
         if(trimmedAddress == '' || trimmedAddress.length == 0){
             setError((prev) => ({ ...prev, address: 'Address is required' }));
             return 'Address is required';
         }    
         if (!addressRegex.test(trimmedAddress)) {
-            setError((prev) => ({ ...prev, address: 'Invalid characters used. Only letters, numbers, spaces, &, ., and - are allowed.' }));
-            return 'Invalid characters used. Only letters, numbers, spaces, &, ., and - are allowed.';
+            setError((prev) => ({ ...prev, address: 'Invalid characters used. Only letters, numbers, spaces, &, ., /, and - are allowed.' }));
+            return 'Invalid characters used. Only letters, numbers, spaces, &, ., /, and - are allowed.';
         }
         
         setError((prev) => ({ ...prev, address: '' }));

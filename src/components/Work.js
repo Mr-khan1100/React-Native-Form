@@ -155,8 +155,8 @@ const Work = (props) => {
         else if(isBeforeEndDate(jobStartDate)) {
       console.log('4');
 
-            setError((prev) => ({ ...prev, startDate: 'Start date must be less than EndDate' }));
-            return 'Start date must be less than EndDate';
+            setError((prev) => ({ ...prev, startDate: 'Start date must be less or equal than EndDate' }));
+            return 'Start date must be less or equal than EndDate';
           }
         else if(isAfterDob(jobStartDate)){
       console.log('5');
@@ -190,8 +190,8 @@ const Work = (props) => {
             setError((prev) => ({ ...prev, endDate: 'Date must be today or earlier.' }));
                 return 'Date must be today or earlier.';
             }else if(isAfterStartDate(jobEndDate)) {
-                setError((prev) => ({ ...prev, endDate: 'End date must be greater than start Date' }));
-                return 'End date must be greater than start Date';
+                setError((prev) => ({ ...prev, endDate: 'End date must be greater or equal than start Date' }));
+                return 'End date must be greater or equal than start Date';
             }else if(isAfterDob(jobEndDate)){
                 setError((prev) => ({ ...prev, endDate: 'End date must be greater than dob' }));
                 return 'End date must be greater than dob';
@@ -472,15 +472,15 @@ const Work = (props) => {
         const trimmedAddress = initalUserDetails.officeAddress.trim();
         console.log(trimmedAddress, 'trimmedAdress');
         
-        const addressRegex = /^[a-zA-Z0-9&.,\-\s]+$/;
+        const addressRegex = /^[a-zA-Z0-9&.,\-\s\/]+$/;
         if(!initalUserDetails.isAddressChecked){
             if(!trimmedAddress){
                 setError((prev) => ({ ...prev, address: 'Address is required' }));
                 return 'Address is required';
             }    
             if (!addressRegex.test(trimmedAddress)) {
-                setError((prev) => ({ ...prev, address: 'Invalid characters used. Only letters, numbers, spaces, &, ., and - are allowed.' }));
-              return 'Invalid characters used. Only letters, numbers, spaces, &, ., and - are allowed.';
+                setError((prev) => ({ ...prev, address: 'Invalid characters used. Only letters, numbers, spaces, &, ., /, and - are allowed.' }));
+              return 'Invalid characters used. Only letters, numbers, spaces, &, ., /,and - are allowed.';
             }
         }
         
