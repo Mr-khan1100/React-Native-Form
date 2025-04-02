@@ -49,7 +49,6 @@ const Personal = (props) => {
     
 
     const validateName = () => {
-        setIsFocus(false);
         const trimmedName = initalUserDetails.fullName.trim();
         const nameParts = trimmedName.split(/\s+/); // Split by spaces
         const nameRegex = /^[a-zA-Z]+$/;
@@ -77,6 +76,8 @@ const Personal = (props) => {
         }
         else{
           console.log('got here');
+        setIsFocus(false);
+
           setError((prev) => ({ ...prev, name: '' }));
           setUserDetails((prev) => {
             const updatedDetails = { ...prev, fullName: trimmedName };
@@ -88,7 +89,7 @@ const Personal = (props) => {
       };
 
     const validateEmail = async() => {
-        setIsFocus(false);
+        // setIsFocus(false);
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const newEmail = initalUserDetails.email.trim();
         if (!newEmail) {
@@ -99,10 +100,22 @@ const Personal = (props) => {
           return 'Invalid email format.';
         } 
         // else {
-          setError((prev) => ({ ...prev, email: '' }));
         try {
           // Check if email is changing
-          if (newEmail !== userEmail) {
+            if (newEmail !== userEmail) {
+              const existingDataWithNewEmail = await getData(newEmail);
+        
+            if (existingDataWithNewEmail) {
+              setError((prev) => ({ 
+                ...prev, 
+                email: 'This email is already registered',
+              }));
+              setIsFocus(false);
+
+              return 'Email already exists';
+            }
+            setError((prev) => ({ ...prev, email: '' }));
+
             const existingData = await getData(userEmail);
 
             await storeData(newEmail, existingData || { ...initalUserDetails, email: newEmail });
@@ -115,11 +128,14 @@ const Personal = (props) => {
       
             // Explicitly save with new key
             await storeData(newEmail, { ...userDetails, email: newEmail });
+
+            setIsFocus(false);
           } else {
             // Regular save if email unchanged
             const updatedDetails = { ...userDetails, email: newEmail };
             await handleStore(updatedDetails);
             setUserDetails(updatedDetails);
+            setIsFocus(false);
           }
         } catch (error) {
           console.error('Email update error:', error);
@@ -131,7 +147,7 @@ const Personal = (props) => {
       };
 
     const validateDob = (dob) =>{
-      setIsFocus(false);
+      // setIsFocus(false);
       // const dob = initalUserDetails.dob;
         if (!dob) {
           setError((prev) => ({ ...prev, dob: 'Date of birth is required.' }));
@@ -247,7 +263,7 @@ const Personal = (props) => {
 
 
     const validatePhoneNumber = () => {
-        setIsFocus(false);
+        // setIsFocus(false);
         const cleanedNumber = initalUserDetails.phoneNumber?.replace(/\D/g, ''); // Remove non-digits
 
         const countryValidations = {
@@ -304,6 +320,7 @@ const Personal = (props) => {
             // setIsChangeDetect(true);
               return validation.error;
         } else{
+        setIsFocus(false);
           setError(prev => ({ ...prev, phoneNumber: '' }));
           // setUserDetails((prev) => ({...prev, phoneNumber: cleanedNumber,
           // }));
@@ -331,7 +348,6 @@ const Personal = (props) => {
 
 
     const validateAddress = () => {
-      setIsFocus(false);
         const trimmedAddress = initalUserDetails.address.trim();
         const addressRegex = /^[a-zA-Z0-9&.,\-\s\/]+$/;
 
@@ -347,6 +363,8 @@ const Personal = (props) => {
         setError((prev) => ({ ...prev, address: '' }));
         // setUserDetails((prev) => ({...prev, address: trimmedAddress,
         // }));
+      setIsFocus(false);
+
         setUserDetails((prev) => {
           const updatedDetails = { ...prev, address: trimmedAddress };
             handleStore(updatedDetails);

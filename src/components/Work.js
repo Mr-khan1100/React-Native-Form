@@ -41,7 +41,6 @@ const Work = (props) => {
     );
     
     const validateOccupation = () => {
-      setIsFocus(false);
       console.log('came here');
       
         const trimmedOccupation = initalUserDetails.occupation.trim();
@@ -74,6 +73,7 @@ const Work = (props) => {
         }
     
         setError((prev) => ({ ...prev, occupation: '' }));
+        setIsFocus(false);
         setUserDetails((prev) => {
           const updatedDetails = { ...prev, occupation: trimmedOccupation };
             handleStore(updatedDetails);
@@ -83,7 +83,6 @@ const Work = (props) => {
     };
 
     const validateCompany = () => {
-      setIsFocus(false);
       console.log('came to compnay');
       
         const trimmedCompany = initalUserDetails.company?.trim();
@@ -123,6 +122,8 @@ const Work = (props) => {
 
 
         setError((prev) => ({ ...prev, company: '' }));
+        setIsFocus(false);
+
         setUserDetails((prev) => {
           const updatedDetails = { ...prev, company: trimmedCompany };
             handleStore(updatedDetails);
@@ -132,7 +133,6 @@ const Work = (props) => {
     };
 
     const validateStartDate = (jobStartDate) =>{
-      setIsFocus(false);
       console.log('1');
       
         if (!jobStartDate) {
@@ -178,7 +178,7 @@ const Work = (props) => {
     };
 
     const validateEndDate = (jobEndDate) =>{
-      setIsFocus(false);
+      // setIsFocus(false);
         if(!initalUserDetails.isEndDateChecked){
             if (!jobEndDate) {
             setError((prev) => ({ ...prev, endDate: 'End date is required.' }));
@@ -468,7 +468,7 @@ const Work = (props) => {
     const validateAddress = () => {
       // console.log('came to validate address', initalUserDetails);
       
-        setIsFocus(false);
+        // setIsFocus(false);
         const trimmedAddress = initalUserDetails.officeAddress.trim();
         console.log(trimmedAddress, 'trimmedAdress');
         
@@ -485,6 +485,8 @@ const Work = (props) => {
         }
         
         setError((prev) => ({ ...prev, address: '' }));
+        setIsFocus(false);
+
         setUserDetails((prev) => {
           const updatedDetails = { ...prev, officeAddress: trimmedAddress };
             handleStore(updatedDetails);
