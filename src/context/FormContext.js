@@ -38,7 +38,6 @@ export const FormProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleStore = async (updatedUserDetails) => {
-        // Ensure email is present and validated
         if (!userEmail) {
           console.error('Cannot save data: Email not set');
           return;

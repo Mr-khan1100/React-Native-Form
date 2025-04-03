@@ -1,68 +1,55 @@
-import React, { useCallback, useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import TopBar from '../components/TopBar';
 import Personal from '../components/Personal';
 import Work from '../components/Work';
 import Documents from '../components/Documents';
-import { useNavigation } from '@react-navigation/native';
 import FormContext from '../context/FormContext';
-import { Alert, TouchableOpacity } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { IMPORTANT, IMPORTANT_MESSAGE, PERSONAL, WORK, WORK_LOCKED } from '../constants/personalScreenConstants';
+import { Alerts } from '../utils/helper';
+import { DOCUMENT, DOCUMENT_LOCKED } from '../constants/workScreenConstant';
 
 const Tab = createMaterialTopTabNavigator();
 
 const AppNavigator = () => {
   const { initalUserDetails, isChangeDetect, isWorkChangeDetect } = useContext(FormContext);
-  console.log(isChangeDetect,'isChange');
   
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={styles.safeAreaFlex}>
       <TopBar />
       <Tab.Navigator screenOptions={{ swipeEnabled: false }}>
-        <Tab.Screen name="Personal" component={Personal}  />
+        <Tab.Screen name={PERSONAL} component={Personal}  />
         <Tab.Screen 
-          name="Work" 
+          name={WORK} 
           component={Work} 
           options={{
-            tabBarLabel: (!isChangeDetect && initalUserDetails.isPersonalDone) ? 'Work' : 'Work (Locked)',
+            tabBarLabel: (!isChangeDetect && initalUserDetails.isPersonalDone) ? WORK : WORK_LOCKED,
           }}
           listeners={{
             tabPress: e => {
               if (!isChangeDetect && initalUserDetails.isPersonalDone) {
-                // Allow navigation - do nothing
-                return;
+                return null;
               }
-              
-              // Otherwise block navigation
               e.preventDefault();
-              Alert.alert(
-                'IMPORTANT',
-                'Please fill all required fields, check no field is focused, or press blue button to save changes, and then proceed',
-                [{ text: 'OK' }]
-              );
+             Alerts(IMPORTANT, IMPORTANT_MESSAGE);
             },
           }}
         />
         <Tab.Screen 
-          name="Documents" 
+          name={DOCUMENT}
           component={Documents}
           options={{
-            tabBarLabel: (!isChangeDetect && !isWorkChangeDetect && initalUserDetails.isWorkDone) ? 'Document' : 'Document (Locked)',
+            tabBarLabel: (!isChangeDetect && !isWorkChangeDetect && initalUserDetails.isWorkDone) ? DOCUMENT : DOCUMENT_LOCKED,
           }}
           listeners={{
             tabPress: e => {
               if (!isChangeDetect && !isWorkChangeDetect && initalUserDetails.isWorkDone) {
-                // Allow navigation - do nothing
-                return;
+                return null;
               }
-              // if(!initalUserDetails.isWorkDone){
-               e.preventDefault(); // <-- this function blocks navigating to screen
-               Alert.alert(
-                'IMPORTANT',
-                'Please fill all required fields, check no field is focused, or press blue button to save changes, and then proceed',
-                [{ text: 'OK' }]
-              );
-              // }
+               e.preventDefault();
+               Alerts(IMPORTANT, IMPORTANT_MESSAGE);
             },
           }}
         />
@@ -70,5 +57,10 @@ const AppNavigator = () => {
     </SafeAreaView>
   );
 };
+ const styles =  StyleSheet.create({
+    safeAreaFlex :{
+      flex: 1,
+    },
+ });
 
 export default AppNavigator;

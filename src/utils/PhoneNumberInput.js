@@ -1,34 +1,21 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, StyleSheet, Image, unstable_batchedUpdates } from 'react-native';
-import { CountryCodeList } from './CountryCodeList'; // Custom country data
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, StyleSheet, Image } from 'react-native';
+import { countryCodeList } from './countryCodeList';
 import FormContext from '../context/FormContext';
-import { useFocusEffect } from '@react-navigation/native';
+import DropDownIcon from '../../assets/Images/DropDownIcon.png';
+import { PHONE_NUMBER_PLACEHOLDER, PHONE_PAD, SEARCH_PLACEHOLDER, SLIDE } from '../constants/personalScreenConstants';
 
 
 const PhoneNumberInput = ({
     phoneNumber,
-    // setPhoneLength,
-    // setCountryCode,
     onBlur,
     onFocus,
     onChangeText,
-    handleStore,
-    // setcountryInitials,
-    // setSelectedCountry,
-    // selectedCountry,
     error,
 }) => {
-  const {initalUserDetails, setInitialUserDetails, setUserDetails, setIsChangeDetect} = useContext(FormContext);
-  // const {userDetails, setUserDetails} = useContext(FormContext);
-  // const [selectedCountry, setSelectedCountry] = useState({code : '+91', flag: '🇮🇳',initial:'IN', phoneLength: 10 });
+  const {initalUserDetails, setInitialUserDetails, setIsChangeDetect} = useContext(FormContext);
   const [modalVisible, setModalVisible] = useState(false);
   const [search, setSearch] = useState('');
-  
-  // useEffect(() => {
-  //   setPhoneLength(selectedCountry.phoneLength);
-  //   setcountryInitials(selectedCountry.initial);
-  //   setCountryCode(selectedCountry.code);
-  // }, [selectedCountry, setPhoneLength, setcountryInitials]);
 
   const openModal = () => {
     setSearch('');
@@ -46,47 +33,21 @@ const PhoneNumberInput = ({
         initial: country.code, 
         phoneLength: country.phone_length, 
         };
-        // setSelectedCountry(newCountry);
         setInitialUserDetails(prev => ({...prev, selectedCountry:newCountry}));
-        // setUserDetails((prev) => ({...prev, selectedCountry: newCountry}));
-      //   setInitialUserDetails(prev => {
-      //     const updatedState = { ...prev, selectedCountry: newCountry };
-      //     setTimeout(() => {
-      //         if (onBlur) onBlur();
-      //     }, 0);  // Ensures it runs AFTER the state update
-      //     return updatedState;
-      // });
-
-        // setUserDetails((prev) => {
-        //   const updatedDetails = { ...prev,  selectedCountry: newCountry };
-        //     handleStore(updatedDetails);
-        //     return updatedDetails;
-        // });
-
-  
-       
         setIsChangeDetect(true);
         setModalVisible(false);
-        // if (onBlur) onBlur();
-        // Trigger validation with new country's phone length
-        // if (onBlur) onBlur(phoneNumber, newCountry.phoneLength, newCountry.initial);
-        console.log(initalUserDetails.selectedCountry, 'selected country');
 
 
     };
 
     useEffect(() => {
       if (isCountryUpdated.current) {
-          isCountryUpdated.current = false; // Reset after running
-          if (initalUserDetails.selectedCountry) {
-        setIsChangeDetect(true);
-
-              onBlur();
-          }
-      }
+          isCountryUpdated.current = false;
+            onBlur();
+        }
   }, [initalUserDetails.selectedCountry]);
 
-  const filteredCountries = CountryCodeList.filter((country) =>
+  const filteredCountries = countryCodeList.filter((country) =>
     country.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -94,23 +55,19 @@ const PhoneNumberInput = ({
     <View style={styles.container}>
       <Text style={styles.label}>Phone Number*</Text>
       <View style={styles.inputRow}>
-        {/* Country Selector */}
         <TouchableOpacity style={styles.countrySelector} onPress={openModal}>
           <Text style={styles.flag}>{initalUserDetails.selectedCountry.flag}</Text>
           <Text style={styles.code}>{initalUserDetails.selectedCountry.code}</Text>
-          <Image source={require('../../assets/Images/DropDownIcon.png')} style={styles.icon} />
+          <Image source={DropDownIcon} style={styles.icon} />
         </TouchableOpacity>
-
-        {/* Phone Number Input */}
         <TextInput
             style={styles.input}
-            keyboardType="phone-pad"
-            placeholder="Enter phone number"
+            keyboardType={PHONE_PAD}
+            placeholder={PHONE_NUMBER_PLACEHOLDER}
             placeholderTextColor={'#c4bfbe'}
             value={phoneNumber}
             onChangeText={onChangeText}
             maxLength={20}
-        //   onBlur={onBlur}
             onBlur={() => onBlur()}
             onFocus={onFocus}
         />
@@ -118,13 +75,12 @@ const PhoneNumberInput = ({
       {error && <Text style={styles.errorText}>{error}</Text>}
 
 
-      {/* Modal for Country Selection */}
-      <Modal visible={modalVisible} transparent animationType="slide">
+      <Modal visible={modalVisible} transparent animationType={SLIDE}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <TextInput
               style={styles.searchInput}
-              placeholder="Search country"
+              placeholder={SEARCH_PLACEHOLDER}
               value={search}
               onChangeText={setSearch}
             />
@@ -151,7 +107,7 @@ const PhoneNumberInput = ({
 
 const styles = StyleSheet.create({
   container: {
-     margin: 0 
+     margin: 0, 
     },
   label: { 
     fontSize: 16,
@@ -161,7 +117,7 @@ const styles = StyleSheet.create({
   inputRow: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    marginBottom:15
+    marginBottom:15,
     },
   countrySelector: {
     flexDirection: 'row',
@@ -175,11 +131,11 @@ const styles = StyleSheet.create({
   },
   flag: { 
     fontSize: 24, 
-    marginRight: 8 
+    marginRight: 8, 
     },
   code: { 
     fontSize: 16, 
-    marginRight: 4 
+    marginRight: 4, 
     },
   input: {
     flex: 1,
@@ -194,7 +150,7 @@ const styles = StyleSheet.create({
   modalContainer: { 
     flex: 1, 
     backgroundColor: 'rgba(0,0,0,0.5)', 
-    justifyContent: 'center' 
+    justifyContent: 'center', 
 },
   modalContent: { backgroundColor: '#fff', padding: 20, borderRadius: 16, margin: 20 },
   searchInput: {

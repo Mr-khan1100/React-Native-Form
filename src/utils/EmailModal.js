@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { EMAIL_ADDRESS, EMAIL_PLACEHOLDER, EMAIL_REGEX, FADE, INVALID_EMAIL } from '../constants/personalScreenConstants';
 
 const EmailModal = ({ visible, onSubmit }) => {
   const [email, setEmail] = useState('');
@@ -14,8 +15,8 @@ const EmailModal = ({ visible, onSubmit }) => {
 
   const handleSubmit = () => {
     // Simple email validation
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      setError('Please enter a valid email.');
+    if (!email || !EMAIL_REGEX.test(email)) {
+      setError(INVALID_EMAIL);
       return;
     }
     setError('');
@@ -23,7 +24,7 @@ const EmailModal = ({ visible, onSubmit }) => {
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType={FADE}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.title}>Enter Your Email</Text>
@@ -32,10 +33,12 @@ const EmailModal = ({ visible, onSubmit }) => {
             value={email}
             onChangeText={(text) => {
               setEmail(text);
-              if (error) setError('');
+              if (error){
+                setError('');
+              } 
             }}
-            placeholder="Email Address"
-            keyboardType="email-address"
+            placeholder={EMAIL_PLACEHOLDER}
+            keyboardType={EMAIL_ADDRESS}
             autoCapitalize="none"
           />
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -53,7 +56,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // dimmed background
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     width: 300,

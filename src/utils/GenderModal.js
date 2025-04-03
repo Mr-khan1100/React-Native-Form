@@ -1,33 +1,29 @@
 import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import FormContext from '../context/FormContext';
+import { FADE, GENDER_PLACEHOLDER, MARRIAGE_PLACEHOLDER } from '../constants/personalScreenConstants';
 
 const genders = ['Male', 'Female', 'Other'];
-const marriageStatus = ['Single', 'Engaged', 'Married']
+const marriageStatus = ['Single', 'Engaged', 'Married'];
 
   const GenderSelectionModal = ({ modalVisible, setModalVisible, isGender, handleStore}) => {
-  const {setIsChangeDetect, setInitialUserDetails, setUserDetails} = useContext(FormContext);
+  const {setInitialUserDetails, setUserDetails} = useContext(FormContext);
 
   const handleSelect = (item) => {
     if(isGender){
-      // setGender(item);
-      // setGender(prev => ({...prev, gender:item}));
       setInitialUserDetails(prev => ({...prev, gender:item}));
       setUserDetails((prev) => {
         const updatedDetails = { ...prev, gender: item };
           handleStore(updatedDetails);
           return updatedDetails;
       });
-      // setIsChangeDetect(true);
     }else{
-      // setMarriageStatus(item);
       setInitialUserDetails(prev => ({...prev, marriageStatus:item}));
       setUserDetails((prev) => {
         const updatedDetails = { ...prev, marriageStatus: item };
           handleStore(updatedDetails);
           return updatedDetails;
       });
-      // setIsChangeDetect(true);
     }
     setModalVisible(false);
   };
@@ -35,13 +31,13 @@ const marriageStatus = ['Single', 'Engaged', 'Married']
   return (
     <Modal
       transparent
-      animationType="fade"
+      animationType={FADE}
       visible={modalVisible}
       onRequestClose={() => setModalVisible(false)}
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <Text style={styles.modalTitle}>{isGender ? 'Select Gender' : 'Select Status'}</Text>
+          <Text style={styles.modalTitle}>{isGender ? GENDER_PLACEHOLDER : MARRIAGE_PLACEHOLDER}</Text>
             {isGender ? (
                 genders.map((gender, index) => (
                     <TouchableOpacity 

@@ -1,4 +1,5 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { DOCUMENT_INPUT_PLACEHOLDER } from '../constants/documentScreenConstant';
 const DocumentInput = ({
   label,
   value,
@@ -23,7 +24,7 @@ const DocumentInput = ({
       >
         <View style={styles.fileUploadContent}>
           <Text style={styles.fileUploadText}>
-            {value ? value : 'Select File of type (png,pdf,doc) maximum 2MB of size'}
+            {value ? value : DOCUMENT_INPUT_PLACEHOLDER}
           </Text>
           {iconSource && (
             <Image source={iconSource} style={styles.icon} />
@@ -62,7 +63,7 @@ const styles = StyleSheet.create({
   icon: {
     width: 25,
     height: 25,
-    opacity:0.7
+    opacity:0.7,
     // tintColor: '#4E4E4E',
   },
   errorInput: {

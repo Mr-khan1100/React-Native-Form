@@ -1,5 +1,5 @@
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native'
-import React from 'react'
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import React from 'react';
 
 const InputFields = ({
     label,
@@ -14,7 +14,7 @@ const InputFields = ({
     isDisabled = false,
     placeholder,
     keyboardType,
-    maxLength
+    maxLength,
   }) => {
   return (
     <View style={styles.inputContainer}>
@@ -40,8 +40,8 @@ const InputFields = ({
           </View>
           {error && <Text style={styles.errorText}>{error}</Text>}
         </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   label: {
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 50,
-    color:'#2E2E2E'
+    color:'#2E2E2E',
   },
   iconContainer: {
     justifyContent: 'center',
@@ -82,4 +82,4 @@ const styles = StyleSheet.create({
   },
 
 });
-export default InputFields
+export default InputFields;

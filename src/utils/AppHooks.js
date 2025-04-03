@@ -1,4 +1,4 @@
-import { PermissionsAndroid, Platform } from "react-native";
+import { Alert, Linking, PermissionsAndroid, Platform } from "react-native";
 // import { NativeModules } from 'react-native';
 
 
@@ -25,7 +25,7 @@ export const requestGalleryPermission = async () => {
               'Please enable media access in app settings',
               [
                 { text: 'Cancel' },
-                { text: 'Open Settings', onPress: () => Linking.openSettings() }
+                { text: 'Open Settings', onPress: () => Linking.openSettings() },
               ]
             );
           }
@@ -46,21 +46,3 @@ export const requestGalleryPermission = async () => {
     }
   };
 
-
-  // const { ManageExternalStorage } = NativeModules;
-  
-  // // Check permission
-  // async function checkPermission() {
-  //   const hasPermission = await ManageExternalStorage.hasPermission();
-  //   if (!hasPermission) {
-  //     requestPermission();
-  //   }
-  // }
-  
-  // // Request permission
-  // function requestPermission() {
-  //   ManageExternalStorage.requestPermission();
-  // }
-  
-  // // Example Usage
-  // checkPermission();

@@ -7,7 +7,7 @@ export default function useNetworkState() {
     const unsubscribe = NetInfo.addEventListener(async netState => {
         
       if (netState.isConnected) {
-        await NetInfo.fetch()
+        await NetInfo.fetch();
         if (netState.isInternetReachable) {
           setNetworkState(true);
         }

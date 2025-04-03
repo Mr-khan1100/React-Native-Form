@@ -5,11 +5,11 @@ import { FormProvider } from './src/context/FormContext';
 
 const App = () => {
   return (
-    <FormProvider>
-      <NavigationContainer>
+    <NavigationContainer>
+      <FormProvider>
         <AppNavigator />
-      </NavigationContainer>
-    </FormProvider>
+      </FormProvider>
+    </NavigationContainer>
   );
 };
 

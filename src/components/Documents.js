@@ -1,83 +1,46 @@
-import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, ScrollView, Button, Alert } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import React, { useContext, useState } from 'react';
 import FormBlueButton from '../utils/FormBlueButton';
 import DocumentInput from '../utils/DocumentInput';
-import { pick, types  } from '@react-native-documents/picker'
+import FileIcon from '../../assets/Images/fileIcon.png';
+import { pick, types  } from '@react-native-documents/picker';
 import { requestGalleryPermission } from '../utils/AppHooks';
-import { NativeModules } from 'react-native';
 import ReactNativeBlobUtil from 'react-native-blob-util';
-import { decode } from 'base-64'; 
 import FormContext from '../context/FormContext';
 import NetInfo from '@react-native-community/netinfo';
+import { AADHAR, AADHAR_IS_REQUIRED, AADHAR_LABEL, CHECK_INTERNET_MESSAGE, FILE_SIZE_LIMIT, INVALID_FILE_FORMAT, MAX_FILE_SIZE_BYTES, NO_INTERNET, OPEN, PAN_CARD, PAN_CARD_IS_REQUIRED, PAN_CARD_LABEL, PERMISSION_DENIED, STORAGE_PERMISSION_REQUIRED, SUBMIT, SUCCESS, SUCCESS_MESSAGE } from '../constants/documentScreenConstant';
+import { Alerts } from '../utils/helper';
 
 
 const Documents = (props) => {
     const {setUserDetails, initalUserDetails, setInitialUserDetails, handleStore} = useContext(FormContext);
-    // const [aadharFile, setAadharFile] = useState({name: userDetails?.aadharFile?.name || '', type: userDetails?.aadharFile?.type ||'', uri: userDetails?.aadharFile?.uri || '', blob: userDetails?.aadharFile?.blob || ''});
-    // const [panFile, setPanFile] = useState({name: userDetails?.panFile?.name || '', type: userDetails?.panFile?.type || '', uri: userDetails?.panFile?.uri || '', blob: userDetails?.panFile?.blob || ''});
     const [error, setError] = useState({Aadhar:'', PanCard:''});
-    const { ManageExternalStorage } = NativeModules;
       
-    const MAX_FILE_SIZE_MB = 2; // 2MB maximum
-    const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-      // Check permission
-      // async function checkPermission() {
-      //   const hasPermission = await ManageExternalStorage.hasPermission();
-      //   console.log(hasPermission);
-        
-      //   if (!hasPermission) {
-      //     requestPermission();
-      //   }
-      // }
-      
-      // Request permission
-      // function requestPermission() {
-      //   ManageExternalStorage.requestPermission();
-      // }
-
-
       const handleFileSelect = async (field) => {
         try {
 
           setError(prev => ({...prev, [field]: ''}));
-
-          // await checkPermission();
           const isPermitted = await requestGalleryPermission();
           if (!isPermitted){
-            Alert.alert('Permission Denied', 'Storage permission is required to select file.');
+            Alerts(PERMISSION_DENIED, STORAGE_PERMISSION_REQUIRED);
             return;
           } 
-    
-          // Pick file(s) with allowed types
+          
           const [pickResults] = await pick({
-            mode: 'open',
+            mode: OPEN,
             allowMultiSelection: false,
             allowVirtualFiles: true,
             type: [types.pdf, types.docx, types.images],
           });
 
-          if (!pickResults) {
-            throw new Error('No file selected');
-          }
-          // Ensure a file was picked
           if (pickResults) {
-      
-            console.log(pickResults ,'file');
-            
             if (!pickResults.hasRequestedType) {
-              console.log('Selected file format is not allowed');
-              setError((prev) => ({ ...prev, [field]: 'Selected file format is not allowed.' }));
-              // throw new Error('Invalid file format. Allowed formats: PDF, DOCX, Images');
-              return 'Selected file format is not allowed';
+              return INVALID_FILE_FORMAT;
             }
     
             if (pickResults.size > MAX_FILE_SIZE_BYTES) {
-              setError((prev) => ({ ...prev, [field]: `File size exceeds ${MAX_FILE_SIZE_MB}MB limit` }));
-              // throw new Error(`File size exceeds ${MAX_FILE_SIZE_MB}MB limit`);
-              return `File size exceeds ${MAX_FILE_SIZE_MB}MB limit`;
+              return FILE_SIZE_LIMIT;
             }
-            console.log('1');
-
             const base64Data = await ReactNativeBlobUtil.fs.readFile(
               pickResults.uri, 
               'base64'
@@ -87,10 +50,6 @@ const Documents = (props) => {
               type: pickResults.type + ';BASE64',
             });
           
-            
-            console.log('2',blob);
-            
-         
             return({
               success: true,
                 data: {
@@ -98,27 +57,22 @@ const Documents = (props) => {
                     type: pickResults.type,
                     uri: pickResults.uri,
                     blob: blob,
-                }
+                },
             });
-    
-            // console.log('Picked file:', file);
           }
         } catch (err) {
           console.error('Error picking file:', err);
-          // setError((prev) => ({ ...prev, [field]: `${field} is required` }));
           return `${field} is required`;
-          // Alert.alert('Message', `${err}`);
         }
       };
 
       const handleAadharSelection = async() =>{
-        const result =  await handleFileSelect('Aadhar');
-        console.log(result, 'result');
+        const result =  await handleFileSelect(AADHAR);
         if(result.success){
           setError(prev => ({...prev, Aadhar: ''}));
           setInitialUserDetails(prev => ({...prev,
             aadharFile: {
-              ...prev.aadharFile,  // Preserve existing properties
+              ...prev.aadharFile,
               name: result.data.name,
               type: result.data.type,
               uri: result.data.uri,
@@ -128,7 +82,7 @@ const Documents = (props) => {
           setUserDetails((prev) => {
             const updatedDetails = {...prev,
               aadharFile: {
-                ...prev.aadharFile,  // Preserve existing properties
+                ...prev.aadharFile,
                 name: result.data.name,
                 type: result.data.type,
                 uri: result.data.uri,
@@ -142,7 +96,7 @@ const Documents = (props) => {
         else {
           setInitialUserDetails(prev => ({...prev,
             aadharFile: {
-              ...prev.aadharFile,  // Preserve existing properties
+              ...prev.aadharFile,
               name: '',
               type: '',
               uri: '',
@@ -155,14 +109,13 @@ const Documents = (props) => {
       };
 
       const handlePanSelection = async() =>{
-        const result =  await handleFileSelect('PanCard');
-        console.log(result, 'result');
+        const result =  await handleFileSelect(PAN_CARD);
 
         if(result.success){
           setError(prev => ({...prev, PanCard: ''}));
           setInitialUserDetails(prev => ({...prev,
             panFile: {
-              ...prev.panFile,  // Preserve existing properties
+              ...prev.panFile,
               name: result.data.name,
               type: result.data.type,
               uri: result.data.uri,
@@ -172,7 +125,7 @@ const Documents = (props) => {
           setUserDetails((prev) => {
             const updatedDetails = {...prev,
               panFile: {
-                ...prev.panFile,  // Preserve existing properties
+                ...prev.panFile,
                 name: result.data.name,
                 type: result.data.type,
                 uri: result.data.uri,
@@ -186,7 +139,7 @@ const Documents = (props) => {
         else {
           setInitialUserDetails(prev => ({...prev,
             panFile: {
-              ...prev.panFile,  // Preserve existing properties
+              ...prev.panFile,
               name: '',
               type: '',
               uri: '',
@@ -203,45 +156,46 @@ const Documents = (props) => {
         
 
         if(isAadharEmpty){
-          setError(prev=> ({...prev, Aadhar:'Aadhar Card is required' }));
+          setError(prev=> ({...prev, Aadhar: AADHAR_IS_REQUIRED }));
         } 
         if(isPanCardEmpty){
-          setError(prev=> ({...prev, PanCard:'Pan Card is required' }));
+          setError(prev=> ({...prev, PanCard: PAN_CARD_IS_REQUIRED }));
         }
         if(!isAadharEmpty && !isPanCardEmpty){
           const netState = await NetInfo.fetch();
           if (!netState.isConnected || !netState.isInternetReachable) {
-            Alert.alert('No Internet Connection', 'Please check your connection and try again.');
+            Alerts(NO_INTERNET, CHECK_INTERNET_MESSAGE);
             return;
           }
-          Alert.alert('Success', 'Form Submitted Successfully.');
+          Alerts(SUCCESS, SUCCESS_MESSAGE);
         }
       };
 
   return (
     <View style={styles.container}>
         <DocumentInput 
-          label={'Aadhaar*'}
+          label={AADHAR_LABEL}
           isFileUpload = {true} 
           value={initalUserDetails.aadharFile.name}
-          iconSource={require('../../assets/Images/fileIcon.png')}  
+          iconSource={FileIcon}  
           onPress={handleAadharSelection}   
           error={error.Aadhar}
         />
 
         <DocumentInput 
-          label={'Pan Card*'}
+          label={PAN_CARD_LABEL}
           isFileUpload = {true} 
           value={initalUserDetails.panFile.name}
-          iconSource={require('../../assets/Images/fileIcon.png')}  
+          iconSource={FileIcon}  
           onPress={handlePanSelection}   
           error={error.PanCard}
         />
-        <FormBlueButton title="SUBMIT" onPress={handleSubmit} />
+        <FormBlueButton title={SUBMIT} onPress={handleSubmit} />
 
     </View>
-  )
-}
+  );
+};
+
 
 const styles = StyleSheet.create({
     container: {

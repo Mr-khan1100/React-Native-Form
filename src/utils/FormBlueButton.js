@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import React from 'react'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React from 'react';
 
 const FormBlueButton = ({disabled, style, onPress, title, titleStyle}) => {
     return (
@@ -16,7 +16,7 @@ const FormBlueButton = ({disabled, style, onPress, title, titleStyle}) => {
           </TouchableOpacity>
         </>
     );
-}
+};
 
 const styles = StyleSheet.create({
     ButtonStyle: {
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
       alignItems: 'center',
       marginTop: 15,
-      marginBottom:50
+      marginBottom:50,
     },
     TextStyle: {
       color: '#FFFFFF',
@@ -34,4 +34,4 @@ const styles = StyleSheet.create({
     },
   });
 
-export default FormBlueButton
+export default FormBlueButton;
