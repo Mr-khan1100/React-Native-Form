@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { EMAIL_ADDRESS, EMAIL_PLACEHOLDER, EMAIL_REGEX, FADE, INVALID_EMAIL } from '../constants/personalScreenConstants';
+import { EMAIL_ADDRESS, EMAIL_PLACEHOLDER, EMAIL_REGEX, FADE, INVALID_EMAIL } from '@constants/personalScreenConstants';
 
 const EmailModal = ({ visible, onSubmit }) => {
   const [email, setEmail] = useState('');

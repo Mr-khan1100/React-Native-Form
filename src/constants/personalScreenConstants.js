@@ -47,4 +47,24 @@ export const ERROR_GETTING_USERDETAIL = 'Error while getting user.';
 export const SEARCH_PLACEHOLDER = 'Search country';
 export const IMPORTANT = 'IMPORTANT';
 export const IMPORTANT_MESSAGE = 'Please fill all required fields, check no field is focused, or press blue button to save changes, and then proceed';
-
+export const FIELDS = {
+    FULL_NAME : 'fullName',
+    EMAIL : 'email',
+    DOB :'dob',
+    GENDER :'gender',
+    PHONE_NUMBER :'phoneNumber',
+    SELECTED_COUNTRY :'selectedCountry',
+    MARRIAGE_STATUS : 'marriageStatus',
+    ADDRESS :'address',
+    OCCUPATION :'occupation',
+    COMPANY :'company',
+    START_DATE: 'startDate',
+    END_DATE:'endDate',
+    OFFICE_ADDRESS :'officeAddress',
+    IS_END_DATE_CHECKED :'isEndDateChecked',
+    IS_ADDRESS_CHECKED : 'isAddressChecked',
+    AADHAR_FILE :'aadharFile',
+    PAN_FILE :'panFile',
+    IS_PERSONAL_DONE :'isPersonalDone',
+    IS_WORK_DONE:'isWorkDone',
+};

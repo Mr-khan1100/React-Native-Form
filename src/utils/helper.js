@@ -1,5 +1,5 @@
 import { Alert } from 'react-native';
-import { CURRENTLY_WORKING, DATE_REGEX } from '../constants/personalScreenConstants';
+import { CURRENTLY_WORKING, DATE_REGEX } from '@constants/personalScreenConstants';
 
 export const countryValidations = {
     'US': {

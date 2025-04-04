@@ -1,20 +1,21 @@
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import  GenderSelectionModal  from '../utils/GenderModal';
-import PhoneNumberInput from '../utils/PhoneNumberInput';
-import FormBlueButton from '../utils/FormBlueButton';
-import InputFields from '../utils/InputFields';
-import FormContext from '../context/FormContext';
-import CalenderIcon from '../../assets/Images/date_input.png';
-import DropDownIcon from '../../assets/Images/DropDownIcon.png';
-import { getData, removeData, storeData } from '../services/storageService';
+import  GenderSelectionModal  from '@utils/GenderModal';
+import PhoneNumberInput from '@utils/PhoneNumberInput';
+import FormBlueButton from '@utils/FormBlueButton';
+import InputFields from '@utils/InputFields';
+import FormContext from '@context/FormContext';
+import CalenderIcon from '@assets/date_input.png';
+import DropDownIcon from '@assets/DropDownIcon.png';
 import { useFocusEffect } from '@react-navigation/native';
-import { ADDRESS_IS_REQUIRED, ADDRESS_LABEL, ADDRESS_PLACEHOLDER, ADDRESS_REGEX, CURRENTLY_WORKING, DATE, DEFAULT, DOB_LABEL, DOB_PLACEHOLDER, DOB_REQUIRED, DOB_VALIDATE_WTIH_WORK_EXPERIENCE, EMAIL_ADDRESS, EMAIL_ALREADY_REGISTERED, EMAIL_IS_REQUIRED, EMAIL_LABEL, EMAIL_PLACEHOLDER, EMAIL_REGEX, ERROR_GETTING_USERDETAIL, ERROR_UPDATING_EMAIL, FADE, FULL_NAME_REQUIRED, FUTURE_DATE, GENDER_LABEL, GENDER_PLACEHOLDER, INVALID_ADDRESS, INVALID_DATE, INVALID_EMAIL, MARRIAGE_LABEL, MARRIAGE_PLACEHOLDER, MISSING_INFO, NAME_IS_REQUIRED, NAME_LABEL, NAME_LENGTH, NAME_ONLY_ALPHABETS, NAME_PLACEHOLDER, NEXT, NEXT_BUTTON_ALERT_MESSAGE, PHONE_NUMBER_REQUIRED, PHONE_PAD, SOMETHING_WENT_WRONG, WORK } from '../constants/personalScreenConstants';
-import { Alerts, countryValidations, formatDate, handleDateChange, isDateInFuture, isValidDate } from '../utils/helper';
+import { ADDRESS_IS_REQUIRED, ADDRESS_LABEL, ADDRESS_PLACEHOLDER, ADDRESS_REGEX, CURRENTLY_WORKING, DATE, DEFAULT, DOB_LABEL, DOB_PLACEHOLDER, DOB_REQUIRED, DOB_VALIDATE_WTIH_WORK_EXPERIENCE, EMAIL_ADDRESS, EMAIL_IS_REQUIRED, EMAIL_LABEL, EMAIL_PLACEHOLDER, EMAIL_REGEX, ERROR_GETTING_USERDETAIL, ERROR_UPDATING_EMAIL, FADE, FIELDS, FULL_NAME_REQUIRED, FUTURE_DATE, GENDER_LABEL, GENDER_PLACEHOLDER, INVALID_ADDRESS, INVALID_DATE, INVALID_EMAIL, MARRIAGE_LABEL, MARRIAGE_PLACEHOLDER, MISSING_INFO, NAME_IS_REQUIRED, NAME_LABEL, NAME_LENGTH, NAME_ONLY_ALPHABETS, NAME_PLACEHOLDER, NEXT, NEXT_BUTTON_ALERT_MESSAGE, PHONE_NUMBER_REQUIRED, PHONE_PAD, SOMETHING_WENT_WRONG, WORK } from '@constants/personalScreenConstants';
+import { Alerts, countryValidations, formatDate, handleDateChange, isDateInFuture, isValidDate } from '@utils/helper';
+import { useDispatch, useSelector } from 'react-redux';
+import { initializeUser, loadOrCreateUser, updateField, updateUserEmail } from '@redux/slice/userDetailsSlice';
 
 const Personal = (props) => {
-    const {userDetails, setUserDetails, setIsChangeDetect,  initalUserDetails, setInitialUserDetails, handleStore, userEmail, setUserEmail} = useContext(FormContext);
+    const {setIsChangeDetect,  initalUserDetails, setInitialUserDetails, userEmail, setUserEmail} = useContext(FormContext);
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [genderModalVisible, setGenderModalVisible] = useState(false);
     const [MerriageModalVisible, setMerriageModalVisible] = useState(false);
@@ -22,9 +23,24 @@ const Personal = (props) => {
     const [isFocus, setIsFocus] = useState(false);
     const [error, setError] = useState({name:'', email:'', dob:'', gender:'', phoneNumber:'', marriage:'', address:'',userEmail:''});
 
+    const dispatch = useDispatch();
+    // const reduxUserDetails = useSelector(state => state.userDetails);
+    const reduxEmail = useSelector(state => state.userDetails.email);
+    
     useEffect(() => {
       setShowEmailModal(true);
     }, []);
+
+    // useEffect(() => {
+    //   console.log('user detail changed');
+    //   setInitialUserDetails(reduxUserDetails);
+    // }, [reduxUserDetails]);
+
+    useEffect(() => {
+      console.log('re rendering the personal component');
+      
+      setUserEmail(reduxEmail);
+    }, [reduxEmail]);
 
     useFocusEffect(
       useCallback(() => {
@@ -36,8 +52,6 @@ const Personal = (props) => {
     );
 
     const validateName = () => {
-      // console.log(NAME_IS_REQUIRED);
-      
         const trimmedName = initalUserDetails.fullName.trim();
         const nameParts = trimmedName.split(/\s+/);
         const nameRegex = /^[a-zA-Z]+$/;
@@ -66,11 +80,7 @@ const Personal = (props) => {
         else{
           setIsFocus(false);
           setError((prev) => ({ ...prev, name: '' }));
-          setUserDetails((prev) => {
-            const updatedDetails = { ...prev, fullName: trimmedName };
-              handleStore(updatedDetails);
-              return updatedDetails;
-          });
+          dispatch(updateField({ field: FIELDS.FULL_NAME , value: trimmedName }));
           return '';
         }
       };
@@ -85,45 +95,33 @@ const Personal = (props) => {
           setError((prev) => ({ ...prev, email: INVALID_EMAIL}));
           return INVALID_EMAIL;
         }
+
         try {
-            if (newEmail !== userEmail) {
-              const existingDataWithNewEmail = await getData(newEmail);
-        
-            if (existingDataWithNewEmail) {
-              setError((prev) => ({ 
+          if (newEmail !== userEmail) {
+            const result = await dispatch(updateUserEmail({
+              oldEmail: userEmail,
+              newEmail: newEmail,
+            }));
+      
+            if (updateUserEmail.rejected.match(result)) {
+              setError(prev => ({ 
                 ...prev, 
-                email: EMAIL_ALREADY_REGISTERED,
+                email: result.payload || ERROR_UPDATING_EMAIL,
               }));
-
-              return EMAIL_ALREADY_REGISTERED;
+              return result.payload;
             }
-            setError((prev) => ({ ...prev, email: '' }));
-
-            const existingData = await getData(userEmail);
-
-            await storeData(newEmail, existingData || { ...initalUserDetails, email: newEmail });
-
-            if (existingData){
-              await removeData(userEmail);
-            } 
-
-            setUserEmail(newEmail);
-            setUserDetails(prev => ({ ...prev, email: newEmail }));
-            setInitialUserDetails(prev => ({ ...prev, email: newEmail }));
-            await storeData(newEmail, { ...userDetails, email: newEmail });
-
-            setIsFocus(false);
-          } else {
-            const updatedDetails = { ...userDetails, email: newEmail };
-            await handleStore(updatedDetails);
-            setUserDetails(updatedDetails);
-            setIsFocus(false);
           }
+          
+          setError(prev => ({ ...prev, email: '' }));
+          return '';
         } catch (err) {
-          setError((prev) => ({ ...prev, email: ERROR_UPDATING_EMAIL }));
+          console.log(err, 'error message');
+          setError(prev => ({ 
+            ...prev, 
+            email: ERROR_UPDATING_EMAIL,
+          }));
           return ERROR_UPDATING_EMAIL;
         }
-        return '';
       };
 
     const validateDob = (dob) =>{
@@ -142,11 +140,7 @@ const Personal = (props) => {
           }
 
         setError((prev) => ({ ...prev, dob: '' }));
-        setUserDetails((prev) => {
-          const updatedDetails = { ...prev, dob: dob };
-            handleStore(updatedDetails);
-            return updatedDetails;
-        });
+        dispatch(updateField({ field: FIELDS.DOB , value: dob }));
         setIsFocus(false);
         return '';
       };
@@ -216,16 +210,8 @@ const Personal = (props) => {
         } else{
         setIsFocus(false);
           setError(prev => ({ ...prev, phoneNumber: '' }));
-          setUserDetails((prev) => {
-            const updatedDetails = { ...prev, phoneNumber: cleanedNumber };
-              handleStore(updatedDetails);
-              return updatedDetails;
-          });
-          setUserDetails((prev) => {
-            const updatedDetails = { ...prev,  selectedCountry: initalUserDetails.selectedCountry };
-              handleStore(updatedDetails);
-              return updatedDetails;
-          });
+          dispatch(updateField({ field: FIELDS.PHONE_NUMBER , value: cleanedNumber }));
+          dispatch(updateField({ field: FIELDS.SELECTED_COUNTRY , value: initalUserDetails.selectedCountry }));
           return '';
         }
     };
@@ -252,11 +238,7 @@ const Personal = (props) => {
         
         setError((prev) => ({ ...prev, address: '' }));
         setIsFocus(false);
-        setUserDetails((prev) => {
-          const updatedDetails = { ...prev, address: trimmedAddress };
-            handleStore(updatedDetails);
-            return updatedDetails;
-        });
+        dispatch(updateField({ field: FIELDS.ADDRESS , value: trimmedAddress }));
         return '';
       };
 
@@ -279,16 +261,11 @@ const Personal = (props) => {
         }else{
           setIsChangeDetect(false);
           setInitialUserDetails(prev => ({...prev, isPersonalDone:true}));
-          setUserDetails((prev) => {
-            const updatedDetails = { ...prev, isPersonalDone:true};
-              handleStore(updatedDetails);
-              return updatedDetails;
-          });
+          dispatch(updateField({ field: FIELDS.IS_PERSONAL_DONE , value: true }));
           props.navigation.navigate(WORK);
 
         }
     };
-
 
     const handleContinue = async () => {
       if (!userEmail) {
@@ -300,30 +277,12 @@ const Personal = (props) => {
       }
     
       try {
-        const existingData = await getData(userEmail);
+        const userData = await loadOrCreateUser(userEmail.toLowerCase());
+        console.log(userData, 'userData');
         
-        if (existingData) {
-          setUserDetails(prev => ({
-            ...prev, 
-            ...existingData, 
-            email: userEmail,
-          }));
-          setInitialUserDetails(prev => ({
-            ...prev, 
-            ...existingData, 
-            email: userEmail,
-          }));
-          
-          
-        } else {
-          const newUser = {
-            ...initalUserDetails,
-            email: userEmail,
-          };
-          setInitialUserDetails(newUser);
-          await storeData(userEmail, newUser);
-        }
-        
+        const { _persist, ...cleanData } = userData;
+        setInitialUserDetails(cleanData);
+        dispatch(initializeUser(cleanData));
         setShowEmailModal(false);
         setError((prev) => ({ ...prev, userEmail: '' }));
       } catch (err) {
@@ -435,14 +394,14 @@ const Personal = (props) => {
         <GenderSelectionModal 
         modalVisible={genderModalVisible}
         setModalVisible={setGenderModalVisible}
-        handleStore={handleStore}
+        dispatch={dispatch}
         isGender={true}
         />
 
         <GenderSelectionModal 
         modalVisible={MerriageModalVisible}
         setModalVisible={setMerriageModalVisible}
-        handleStore={handleStore}
+        dispatch={dispatch}
         isGender={false}
         />
 

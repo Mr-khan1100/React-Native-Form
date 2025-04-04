@@ -1,24 +1,27 @@
-import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, ScrollView, Button, Alert } from 'react-native';
+import { StyleSheet, ScrollView } from 'react-native';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import InputFields from '../utils/InputFields';
-import CustomCheckbox from '../utils/CustomCheckbox ';
-import FormBlueButton from '../utils/FormBlueButton';
-import FormContext from '../context/FormContext';
-import Calender from '../../assets/Images/date_input.png';
+import InputFields from '@utils/InputFields';
+import CustomCheckbox from '@utils/CustomCheckbox ';
+import FormBlueButton from '@utils/FormBlueButton';
+import FormContext from '@context/FormContext';
+import Calender from '@assets/date_input.png';
 import { useFocusEffect } from '@react-navigation/native';
-import { ATLEAST_ONE_APLHABET, COMPANY_ALPHABET_REGEX, COMPANY_IS_REQUIRED, COMPANY_LABEL, COMPANY_LENGTH, COMPANY_PLACEHOLDER, DOCUMENT, END_DATE, END_DATE_LABEL, END_DATE_PLACEHOLDER, END_DATE_REQUIRED, INVALID_OCCUPATION_CHARACTER, IS_AFTER_DOB, IS_AFTER_STARTDATE, IS_BEFORE_ENDDATE, MUST_HAVE_ALPHABET_REGEX, OCCUPATION_IS_REQUIRED, OCCUPATION_LABEL, OCCUPATION_LENGTH, OCCUPATION_PLACEHOLDER, OCCUPATION_REGEX, OFFICE_ADDRESS_LABEL, OFFICE_ADDRESS_PLACEHOLDER, REMOTE, START_DATE, START_DATE_LABEL, START_DATE_PLACEHOLDER, START_DATE_REQUIRED } from '../constants/workScreenConstant';
-import { ADDRESS_IS_REQUIRED, ADDRESS_REGEX, CURRENTLY_WORKING, DATE, DEFAULT, FUTURE_DATE, INVALID_ADDRESS, INVALID_DATE, MISSING_INFO, NEXT, NEXT_BUTTON_ALERT_MESSAGE, PHONE_PAD } from '../constants/personalScreenConstants';
-import { Alerts, formatDate, handleDateChange, isDateInFuture, isValidDate } from '../utils/helper';
+import { ATLEAST_ONE_APLHABET, COMPANY_ALPHABET_REGEX, COMPANY_IS_REQUIRED, COMPANY_LABEL, COMPANY_LENGTH, COMPANY_PLACEHOLDER, DOCUMENT, END_DATE, END_DATE_LABEL, END_DATE_PLACEHOLDER, END_DATE_REQUIRED, INVALID_OCCUPATION_CHARACTER, IS_AFTER_DOB, IS_AFTER_STARTDATE, IS_BEFORE_ENDDATE, MUST_HAVE_ALPHABET_REGEX, OCCUPATION_IS_REQUIRED, OCCUPATION_LABEL, OCCUPATION_LENGTH, OCCUPATION_PLACEHOLDER, OCCUPATION_REGEX, OFFICE_ADDRESS_LABEL, OFFICE_ADDRESS_PLACEHOLDER, REMOTE, START_DATE, START_DATE_LABEL, START_DATE_PLACEHOLDER, START_DATE_REQUIRED } from '@constants/workScreenConstant';
+import { ADDRESS_IS_REQUIRED, ADDRESS_REGEX, CURRENTLY_WORKING, DATE, DEFAULT, FIELDS, FUTURE_DATE, INVALID_ADDRESS, INVALID_DATE, MISSING_INFO, NEXT, NEXT_BUTTON_ALERT_MESSAGE, PHONE_PAD } from '@constants/personalScreenConstants';
+import { Alerts, formatDate, handleDateChange, isDateInFuture, isValidDate } from '@utils/helper';
+import { useDispatch } from 'react-redux';
+import { updateField } from '@redux/slice/userDetailsSlice';
 
 const Work = (props) => {
-    const {setUserDetails, initalUserDetails, setInitialUserDetails, setIsWorkChangeDetect, handleStore} = useContext(FormContext);
+    const {initalUserDetails, setInitialUserDetails, setIsWorkChangeDetect} = useContext(FormContext);
     const [currentField, setCurrentField] = useState('');
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [isFocus, setIsFocus] = useState(false);
     const [error, setError] = useState({occupation:'', company:'', startDate:'', endDate:'', address:''});
     const isCurrentlyWorking = useRef(false);
     const isRemote = useRef(false);
+    const dispatch = useDispatch();
 
     useFocusEffect(
       useCallback(() => {
@@ -59,11 +62,7 @@ const Work = (props) => {
     
         setError((prev) => ({ ...prev, occupation: '' }));
         setIsFocus(false);
-        setUserDetails((prev) => {
-          const updatedDetails = { ...prev, occupation: trimmedOccupation };
-            handleStore(updatedDetails);
-            return updatedDetails;
-        });
+        dispatch(updateField({ field: FIELDS.OCCUPATION , value: trimmedOccupation }));
         return '';
     };
 
@@ -94,12 +93,7 @@ const Work = (props) => {
         }
         setError((prev) => ({ ...prev, company: '' }));
         setIsFocus(false);
-
-        setUserDetails((prev) => {
-          const updatedDetails = { ...prev, company: trimmedCompany };
-            handleStore(updatedDetails);
-            return updatedDetails;
-        });
+        dispatch(updateField({ field: FIELDS.COMPANY , value: trimmedCompany }));
         return '';
     };
 
@@ -127,11 +121,7 @@ const Work = (props) => {
           }
         setIsFocus(false);
         setError((prev) => ({ ...prev, startDate: '' }));
-        setUserDetails((prev) => {
-          const updatedDetails = { ...prev, startDate: jobStartDate };
-            handleStore(updatedDetails);
-            return updatedDetails;
-        });
+        dispatch(updateField({ field: FIELDS.START_DATE , value: jobStartDate }));
         return '';
           
       
@@ -158,11 +148,7 @@ const Work = (props) => {
         }
         setIsFocus(false);
         setError((prev) => ({ ...prev, endDate: '' }));
-        setUserDetails((prev) => {
-          const updatedDetails = { ...prev, endDate: jobEndDate };
-            handleStore(updatedDetails);
-            return updatedDetails;
-        });
+        dispatch(updateField({ field: FIELDS.END_DATE , value: jobEndDate }));
         return '';
     };
 
@@ -192,57 +178,6 @@ const Work = (props) => {
         }
         hideDatePicker();
     };
-    
-    // const formatDate = date => {
-    //     const day = String(date.getDate()).padStart(2, '0');
-    //     const month = String(date.getMonth() + 1).padStart(2, '0');
-    //     const year = date.getFullYear();
-    //     return `${day}/${month}/${year}`;
-    // };
-
-    // const isValidDate = date => {
-    //     const datePattern = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
-    //     if(date === 'Currently Working') {
-    //         return false;
-    //     }
-    //     if (!datePattern.test(date)) {
-    //       return false;
-    //     }
-    
-    //     const [day, month, year] = date.split('/').map(Number);
-    
-    //     const currentYear = new Date().getFullYear();
-    //     if (year < 1900 || year > currentYear) {
-    //       return false;
-    //     }
-    
-    //     const daysInMonth = {
-    //       1: 31,
-    //       2: year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28,
-    //       3: 31,
-    //       4: 30,
-    //       5: 31,
-    //       6: 30,
-    //       7: 31,
-    //       8: 31,
-    //       9: 30,
-    //       10: 31,
-    //       11: 30,
-    //       12: 31,
-    //     };
-    
-    //     return day >= 1 && day <= daysInMonth[month];
-    // };
-    
-    // const isDateInFuture = dateString => {
-    //   if(dateString === 'Currently Working') {
-    //     return false;
-    // }
-    //     const [day, month, year] = dateString.split('/').map(Number);
-    //     const date = new Date(year, month - 1, day);
-    //     const today = new Date();
-    //     return date > today;
-    // };
 
     const isBeforeEndDate = dateString => {
         if (initalUserDetails.endDate === CURRENTLY_WORKING || initalUserDetails.endDate === '') {
@@ -320,11 +255,7 @@ const Work = (props) => {
         
         setError((prev) => ({ ...prev, address: '' }));
         setIsFocus(false);
-        setUserDetails((prev) => {
-          const updatedDetails = { ...prev, officeAddress: trimmedAddress };
-            handleStore(updatedDetails);
-            return updatedDetails;
-        });
+        dispatch(updateField({ field: FIELDS.OFFICE_ADDRESS , value: trimmedAddress }));
         return '';
     };
     
@@ -339,17 +270,9 @@ const Work = (props) => {
       isEndDateChecked: newIsEndChecked,
       endDate: newEndDate,
     }));
-   
-    setUserDetails(userPrev => {
-      const updatedDetails = {
-        ...userPrev,
-        isEndDateChecked: newIsEndChecked,
-        endDate: newEndDate,
-      };
-      
-      handleStore(updatedDetails);
-      return updatedDetails;
-    });
+    dispatch(updateField({ field: FIELDS.IS_END_DATE_CHECKED , value: newIsEndChecked }));
+    dispatch(updateField({ field: FIELDS.END_DATE , value: newEndDate }));
+
   };
 
   
@@ -366,20 +289,12 @@ const Work = (props) => {
       setIsWorkChangeDetect(true);
       isRemote.current = true;
       setInitialUserDetails(prev => ({
-       ...prev,
+        ...prev,
         isAddressChecked: newIsChecked,
         officeAddress: newOfficeAddress,
       }));
-      setUserDetails(userPrev => {
-        const updatedDetails = {
-          ...userPrev,
-          isAddressChecked: newIsChecked,
-          officeAddress: newOfficeAddress,
-        };
-        handleStore(updatedDetails);
-        return updatedDetails;
-      });
-      
+      dispatch(updateField({ field: FIELDS.IS_ADDRESS_CHECKED , value: newIsChecked }));
+      dispatch(updateField({ field: FIELDS.OFFICE_ADDRESS , value: newOfficeAddress }));
   };
   
   
@@ -412,12 +327,8 @@ const Work = (props) => {
     }else{
 
       setIsWorkChangeDetect(false);
-      setInitialUserDetails(prev => ({...prev, isWorkDone:true}));
-      setUserDetails((prev) => {
-        const updatedDetails = { ...prev, isWorkDone:true};
-          handleStore(updatedDetails);
-          return updatedDetails;
-      });
+      setInitialUserDetails(prev => ({...prev, isPersonalDone:true}));
+      dispatch(updateField({ field: FIELDS.IS_WORK_DONE , value: true }));
       props.navigation.navigate(DOCUMENT);
     }
   };
@@ -527,7 +438,7 @@ const Work = (props) => {
         />
     </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
     container: {

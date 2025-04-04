@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, StyleSheet, Image } from 'react-native';
 import { countryCodeList } from './countryCodeList';
-import FormContext from '../context/FormContext';
-import DropDownIcon from '../../assets/Images/DropDownIcon.png';
-import { PHONE_NUMBER_PLACEHOLDER, PHONE_PAD, SEARCH_PLACEHOLDER, SLIDE } from '../constants/personalScreenConstants';
+import FormContext from '@context/FormContext';
+import DropDownIcon from '@assets/DropDownIcon.png';
+import { PHONE_NUMBER_PLACEHOLDER, PHONE_PAD, SEARCH_PLACEHOLDER, SLIDE } from '@constants/personalScreenConstants';
 
 
 const PhoneNumberInput = ({

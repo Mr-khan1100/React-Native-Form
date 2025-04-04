@@ -1,15 +1,15 @@
 import React, { useContext } from 'react';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import TopBar from '../components/TopBar';
-import Personal from '../components/Personal';
-import Work from '../components/Work';
-import Documents from '../components/Documents';
-import FormContext from '../context/FormContext';
+import TopBar from '@components/TopBar';
+import Personal from '@components/Personal';
+import Work from '@components/Work';
+import Documents from '@components/Documents';
+import FormContext from '@context/FormContext';
 import { StyleSheet } from 'react-native';
-import { IMPORTANT, IMPORTANT_MESSAGE, PERSONAL, WORK, WORK_LOCKED } from '../constants/personalScreenConstants';
-import { Alerts } from '../utils/helper';
-import { DOCUMENT, DOCUMENT_LOCKED } from '../constants/workScreenConstant';
+import { IMPORTANT, IMPORTANT_MESSAGE, PERSONAL, WORK, WORK_LOCKED } from '@constants/personalScreenConstants';
+import { Alerts } from '@utils/helper';
+import { DOCUMENT, DOCUMENT_LOCKED } from '@constants/workScreenConstant';
 
 const Tab = createMaterialTopTabNavigator();
 

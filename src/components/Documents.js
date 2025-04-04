@@ -1,21 +1,24 @@
 import { View, StyleSheet } from 'react-native';
 import React, { useContext, useState } from 'react';
-import FormBlueButton from '../utils/FormBlueButton';
-import DocumentInput from '../utils/DocumentInput';
-import FileIcon from '../../assets/Images/fileIcon.png';
+import FormBlueButton from '@utils/FormBlueButton';
+import DocumentInput from '@utils/DocumentInput';
+import FileIcon from '@assets/fileIcon.png';
 import { pick, types  } from '@react-native-documents/picker';
-import { requestGalleryPermission } from '../utils/AppHooks';
+import { requestGalleryPermission } from '@utils/AppHooks';
 import ReactNativeBlobUtil from 'react-native-blob-util';
-import FormContext from '../context/FormContext';
+import FormContext from '@context/FormContext';
 import NetInfo from '@react-native-community/netinfo';
-import { AADHAR, AADHAR_IS_REQUIRED, AADHAR_LABEL, CHECK_INTERNET_MESSAGE, FILE_SIZE_LIMIT, INVALID_FILE_FORMAT, MAX_FILE_SIZE_BYTES, NO_INTERNET, OPEN, PAN_CARD, PAN_CARD_IS_REQUIRED, PAN_CARD_LABEL, PERMISSION_DENIED, STORAGE_PERMISSION_REQUIRED, SUBMIT, SUCCESS, SUCCESS_MESSAGE } from '../constants/documentScreenConstant';
-import { Alerts } from '../utils/helper';
+import { AADHAR, AADHAR_IS_REQUIRED, AADHAR_LABEL, CHECK_INTERNET_MESSAGE, FILE_SIZE_LIMIT, INVALID_FILE_FORMAT, MAX_FILE_SIZE_BYTES, NO_INTERNET, OPEN, PAN_CARD, PAN_CARD_IS_REQUIRED, PAN_CARD_LABEL, PERMISSION_DENIED, STORAGE_PERMISSION_REQUIRED, SUBMIT, SUCCESS, SUCCESS_MESSAGE } from '@constants/documentScreenConstant';
+import { Alerts } from '@utils/helper';
+import { useDispatch } from 'react-redux';
+import { FIELDS } from '@constants/personalScreenConstants';
+import { updateField } from '@redux/slice/userDetailsSlice';
 
 
 const Documents = (props) => {
-    const {setUserDetails, initalUserDetails, setInitialUserDetails, handleStore} = useContext(FormContext);
+    const {initalUserDetails, setInitialUserDetails} = useContext(FormContext);
     const [error, setError] = useState({Aadhar:'', PanCard:''});
-      
+    const dispatch = useDispatch();
       const handleFileSelect = async (field) => {
         try {
 
@@ -79,19 +82,12 @@ const Documents = (props) => {
               blob: result.data.blob,
             },
           }));
-          setUserDetails((prev) => {
-            const updatedDetails = {...prev,
-              aadharFile: {
-                ...prev.aadharFile,
-                name: result.data.name,
-                type: result.data.type,
-                uri: result.data.uri,
-                blob: result.data.blob,
-              },
-            };
-              handleStore(updatedDetails);
-              return updatedDetails;
-          });
+          dispatch(updateField({ field: FIELDS.AADHAR_FILE , value: {
+            name: result.data.name,
+            type: result.data.type,
+            uri: result.data.uri,
+            blob: result.data.blob,
+          } }));
         }
         else {
           setInitialUserDetails(prev => ({...prev,
@@ -122,19 +118,12 @@ const Documents = (props) => {
               blob: result.data.blob,
             },
           }));
-          setUserDetails((prev) => {
-            const updatedDetails = {...prev,
-              panFile: {
-                ...prev.panFile,
-                name: result.data.name,
-                type: result.data.type,
-                uri: result.data.uri,
-                blob: result.data.blob,
-              },
-            };
-              handleStore(updatedDetails);
-              return updatedDetails;
-          });
+          dispatch(updateField({ field: FIELDS.PAN_FILE , value: {
+            name: result.data.name,
+            type: result.data.type,
+            uri: result.data.uri,
+            blob: result.data.blob,
+          } }));
         }
         else {
           setInitialUserDetails(prev => ({...prev,

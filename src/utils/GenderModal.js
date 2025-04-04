@@ -1,29 +1,22 @@
 import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
-import FormContext from '../context/FormContext';
-import { FADE, GENDER_PLACEHOLDER, MARRIAGE_PLACEHOLDER } from '../constants/personalScreenConstants';
+import { FADE, FIELDS, GENDER_PLACEHOLDER, MARRIAGE_PLACEHOLDER } from '@constants/personalScreenConstants';
+import { updateField } from '@redux/slice/userDetailsSlice';
+import FormContext from '@context/FormContext';
 
 const genders = ['Male', 'Female', 'Other'];
 const marriageStatus = ['Single', 'Engaged', 'Married'];
 
-  const GenderSelectionModal = ({ modalVisible, setModalVisible, isGender, handleStore}) => {
-  const {setInitialUserDetails, setUserDetails} = useContext(FormContext);
-
+const GenderSelectionModal = ({ modalVisible, setModalVisible, isGender, dispatch}) => {
+  const {setInitialUserDetails} = useContext(FormContext);
   const handleSelect = (item) => {
     if(isGender){
-      setInitialUserDetails(prev => ({...prev, gender:item}));
-      setUserDetails((prev) => {
-        const updatedDetails = { ...prev, gender: item };
-          handleStore(updatedDetails);
-          return updatedDetails;
-      });
+      setInitialUserDetails(prev => ({...prev, gender : item}));
+      dispatch(updateField({ field: FIELDS.GENDER , value: item }));
     }else{
-      setInitialUserDetails(prev => ({...prev, marriageStatus:item}));
-      setUserDetails((prev) => {
-        const updatedDetails = { ...prev, marriageStatus: item };
-          handleStore(updatedDetails);
-          return updatedDetails;
-      });
+      setInitialUserDetails(prev => ({...prev, marriageStatus : item}));
+      dispatch(updateField({ field: FIELDS.MARRIAGE_STATUS , value: item }));
+
     }
     setModalVisible(false);
   };

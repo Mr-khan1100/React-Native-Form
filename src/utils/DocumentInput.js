@@ -1,5 +1,5 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { DOCUMENT_INPUT_PLACEHOLDER } from '../constants/documentScreenConstant';
+import { DOCUMENT_INPUT_PLACEHOLDER } from '@constants/documentScreenConstant';
 const DocumentInput = ({
   label,
   value,
