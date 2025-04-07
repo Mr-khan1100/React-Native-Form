@@ -359,8 +359,8 @@ const Personal = (props) => {
 
         <PhoneNumberInput
             phoneNumber={initalUserDetails.phoneNumber}
-            onBlur={validatePhoneNumber}
-            onChangeText={handlePhoneNumberChange}
+            validatePhoneNumber={validatePhoneNumber}
+            handlePhoneNumberChange={handlePhoneNumberChange}
             onFocus={() => {setError(prev => ({...prev, phoneNumber: ''})); setIsFocus(true);}}
             error={error.phoneNumber}
         />

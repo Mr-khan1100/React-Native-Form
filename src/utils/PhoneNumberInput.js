@@ -8,9 +8,9 @@ import { PHONE_NUMBER_PLACEHOLDER, PHONE_PAD, SEARCH_PLACEHOLDER, SLIDE } from '
 
 const PhoneNumberInput = ({
     phoneNumber,
-    onBlur,
+    validatePhoneNumber,
     onFocus,
-    onChangeText,
+    handlePhoneNumberChange,
     error,
 }) => {
   const {initalUserDetails, setInitialUserDetails, setIsChangeDetect} = useContext(FormContext);
@@ -43,7 +43,7 @@ const PhoneNumberInput = ({
     useEffect(() => {
       if (isCountryUpdated.current) {
           isCountryUpdated.current = false;
-            onBlur();
+          validatePhoneNumber();
         }
   }, [initalUserDetails.selectedCountry]);
 
@@ -66,9 +66,9 @@ const PhoneNumberInput = ({
             placeholder={PHONE_NUMBER_PLACEHOLDER}
             placeholderTextColor={'#c4bfbe'}
             value={phoneNumber}
-            onChangeText={onChangeText}
+            onChangeText={(text) => handlePhoneNumberChange(text)}
             maxLength={20}
-            onBlur={() => onBlur()}
+            onBlur={() => validatePhoneNumber()}
             onFocus={onFocus}
         />
       </View>
