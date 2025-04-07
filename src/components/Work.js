@@ -29,7 +29,7 @@ const Work = (props) => {
         if(!isFocus && hasNoErrors){
           setIsWorkChangeDetect(false);
         }
-      }, [isFocus, error, setIsWorkChangeDetect]) 
+      }, [isFocus, error]) 
     );
     
     const validateOccupation = () => {
@@ -327,7 +327,7 @@ const Work = (props) => {
     }else{
 
       setIsWorkChangeDetect(false);
-      setInitialUserDetails(prev => ({...prev, isPersonalDone:true}));
+      setInitialUserDetails(prev => ({...prev, isWorkDone:true}));
       dispatch(updateField({ field: FIELDS.IS_WORK_DONE , value: true }));
       props.navigation.navigate(DOCUMENT);
     }

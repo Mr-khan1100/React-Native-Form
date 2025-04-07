@@ -111,7 +111,7 @@ const Personal = (props) => {
               return result.payload;
             }
           }
-          
+          setIsFocus(false);
           setError(prev => ({ ...prev, email: '' }));
           return '';
         } catch (err) {

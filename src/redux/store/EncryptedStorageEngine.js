@@ -53,7 +53,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }).concat(autoSaveMiddleware), // Directly reference middleware
+    }).concat(autoSaveMiddleware),
 });
 
 export const persistor = persistStore(store);
