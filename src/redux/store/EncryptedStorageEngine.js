@@ -3,7 +3,6 @@ import { persistStore, persistReducer } from 'redux-persist';
 import userDetailsReducer from '../slice/userDetailsSlice';
 import EncryptedStorage from 'react-native-encrypted-storage';
 
-// 1. Fix storage engine
 const encryptedStorage = {
   setItem: async (key, value) => {
     await EncryptedStorage.setItem(key, value);
@@ -19,18 +18,16 @@ const encryptedStorage = {
   },
 };
 
-// 2. Proper persist config
 const persistConfig = {
   key: 'root',
   storage: encryptedStorage,
   whitelist: ['userDetails'],
   stateReconciler: (inboundState, originalState) => ({
     ...originalState,
-    userDetails: inboundState.userDetails, // Exclude _persist from userDetails
+    userDetails: inboundState.userDetails,
   }),
 };
 
-// 3. Fixed middleware setup
 const autoSaveMiddleware = store => next => action => {
   const result = next(action);
   const state = store.getState().userDetails;
@@ -45,7 +42,6 @@ const autoSaveMiddleware = store => next => action => {
 
 const persistedReducer = persistReducer(persistConfig, userDetailsReducer);
 
-// 4. Correct store configuration
 export const store = configureStore({
   reducer: {
     userDetails: persistedReducer,

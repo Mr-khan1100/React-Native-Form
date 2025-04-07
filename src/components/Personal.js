@@ -48,7 +48,7 @@ const Personal = (props) => {
         if(!isFocus && hasNoErrors){
           setIsChangeDetect(false);
         }
-      }, [isFocus, error, setIsChangeDetect]) 
+      }, [isFocus, error]) 
     );
 
     const validateName = () => {

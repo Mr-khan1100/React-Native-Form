@@ -15,6 +15,5 @@ export const getWorkTabLabel = (isChangeDetect, isPersonalDone) => {
 
 export const getDocumentTabLabel = (isChangeDetect, isWorkChangeDetect, isWorkDone) => {
     return canAccessDocumentTab(isChangeDetect, isWorkChangeDetect, isWorkDone)
-        ? DOCUMENT
-        : DOCUMENT_LOCKED;
+        ? DOCUMENT : DOCUMENT_LOCKED;
 };

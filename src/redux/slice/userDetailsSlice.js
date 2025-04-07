@@ -93,33 +93,14 @@ export const loadOrCreateUser = async(email) => {
     if(encryptedData) {
       userData = JSON.parse(encryptedData);
       console.log(userData, 'userData in load');
-      
-      // const { _persist, ...cleanData } = userData;
-      // dispatch(userDetailsSlice.actions.initializeUser(cleanData));
     } else {
       userData = { ...initialState, email };
       await EncryptedStorage.setItem(`user_${email}`, JSON.stringify(userData));
-      // dispatch(userDetailsSlice.actions.initializeUser(newUser));
     }
     return userData;
   } catch (error) {
     console.error('Storage error:', error);
   }
-};
-
-export const autoSaveMiddleware = store => next => action => {
-  const result = next(action);
-  const state = store.getState().userDetails;
-  
-  if(state.email) {
-    const { _persist, ...sanitizedState } = state;
-    EncryptedStorage.setItem(
-      `user_${state.email}`, 
-      JSON.stringify(sanitizedState)
-    ).catch(error => console.error('Auto-save failed:', error));
-  }
-  
-  return result;
 };
 
 export const {initializeUser, updateField, resetUser } = userDetailsSlice.actions;
